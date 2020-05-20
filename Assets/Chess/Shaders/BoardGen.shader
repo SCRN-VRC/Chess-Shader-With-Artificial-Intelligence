@@ -2,7 +2,6 @@
 {
     Properties
     {
-        _ControllerTex ("Controller", 2D) = "black" {}
         _BufferTex ("Buffer", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.1
     }
@@ -23,7 +22,6 @@
             #include "BotInclude.cginc"
             #include "Debugging.cginc"
 
-            Texture2D<float4> _ControllerTex;
             Texture2D<float4> _BufferTex;
             float _MaxDist;
 
@@ -40,17 +38,18 @@
 
             void findParent (out uint4 outBoard[4], uint2 ID)
             {
-                Texture2D<float4> srcTex = ID.y == 0 ? _ControllerTex : _BufferTex;
-                // The bottom left pixel
-                int2 src = 0;
+                /// REDO
+                // Texture2D<float4> srcTex = ID.y == 0 ? _ControllerTex : _BufferTex;
+                // // The bottom left pixel
+                // int2 src = 0;
 
-                if (ID.y < 1) { src = 0; }
-                else if (ID.y < 139) { src = int2((ID.x - 1) * 2, 0); }
+                // if (ID.y < 1) { src = 0; }
+                // else if (ID.y < 139) { src = int2((ID.x - 1) * 2, 0); }
 
-                outBoard[B_LEFT] = srcTex.Load(int3(src.xy, 0));
-                outBoard[B_RIGHT] = srcTex.Load(int3(src.x + 1, src.y, 0));
-                outBoard[T_LEFT] = srcTex.Load(int3(src.x, src.y + 1, 0));
-                outBoard[T_RIGHT] = srcTex.Load(int3(src.xy + 1, 0));
+                // outBoard[B_LEFT] = srcTex.Load(int3(src.xy, 0));
+                // outBoard[B_RIGHT] = srcTex.Load(int3(src.x + 1, src.y, 0));
+                // outBoard[T_LEFT] = srcTex.Load(int3(src.x, src.y + 1, 0));
+                // outBoard[T_RIGHT] = srcTex.Load(int3(src.xy + 1, 0));
             }
 
             /*

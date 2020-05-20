@@ -1,21 +1,22 @@
-﻿Shader "ChessBot/Controller"
+﻿Shader "ChessBot/Buffer"
 {
     Properties
     {
-        _AlphaBetaTex ("AlphaBeta Pruning Output", 2D) = "black" {}
-        _BufferTex ("Buffer", 2D) = "black" {}
+        _MainTex ("Texture", 2D) = "white" {}
+        _MaxDist ("Max Distance", Float) = 0.1
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
-        LOD 100
+        Cull Off
 
         Pass
         {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
-            
+            #pragma target 5.0
+
             #include "UnityCG.cginc"
 
             struct appdata
@@ -25,9 +26,12 @@
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
+                float3 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
             };
+
+            Texture2D<float4> _MainTex;
+            float _MaxDist;
 
             v2f vert (appdata v)
             {
@@ -36,16 +40,19 @@
                 #ifdef UNITY_UV_STARTS_AT_TOP
                 v.uv.y = 1-v.uv.y;
                 #endif
-                o.uv = UnityStereoTransformScreenSpaceTex(v.uv);
+                o.uv.xy = UnityStereoTransformScreenSpaceTex(v.uv);
+                o.uv.z = distance(_WorldSpaceCameraPos,
+                    mul(unity_ObjectToWorld, float4(0,0,0,1)).xyz) > _MaxDist ?
+                    -1 : 1;
                 return o;
             }
 
-            sampler2D _BufferTex;
-            float4 _BufferTex_ST;
-            
-            fixed4 frag (v2f i) : SV_Target
+            float4 frag (v2f i) : SV_Target
             {
-                return 1;
+                clip(i.uv.z);
+                // sample the texture
+                float4 col = _MainTex.Load(int3(i.uv.xy * _ScreenParams, 0));
+                return col;
             }
             ENDCG
         }
