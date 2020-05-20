@@ -66,11 +66,8 @@
                 // Rooks, queen side then king side
                 // srcPieceID.y contains the pID index for shifting
                 if (ID.x < 28)
-                {
-                    // King side rooks don't shift
-                    srcPieceID = uint2(ROOK, ID.x < 14 ? 0 : 7);
-                    dest = 0;
-                }
+                // King side rooks don't shift
+                { srcPieceID = uint2(ROOK, ID.x < 14 ? 0 : 7); }
                 // Knights
                 else if (ID.x < 44)
                 {
@@ -78,32 +75,26 @@
                     dest = knightList[(ID.x - 28) % 8];
                 }
                 // Bishops
-                else if (ID.x < 70)
-                {
-                    srcPieceID = uint2(BISHOP, ID.x < 57 ? 2 : 5);
-                    dest = 0;
-                }
+                else if (ID.x < 74)
+                { srcPieceID = uint2(BISHOP, ID.x < 59 ? 2 : 5); }
                 // Queen
                 // Kings/Queens don't need shifts srcPieceID.y shifts
-                else if (ID.x < 97)
-                {
-                    srcPieceID = uint2(QUEEN, 3);
-                    dest = 0;
-                }
+                else if (ID.x < 105)
+                { srcPieceID = uint2(QUEEN, 3); }
                 // King
-                else if (ID.x < 106)
+                else if (ID.x < 114)
                 {
                     srcPieceID = uint2(KING, 4);
-                    dest = kingList[ID.x - 97];
+                    dest = kingList[ID.x - 105];
                 }
                 // Pawns
-                else if (ID.x < 138)
+                else if (ID.x < 146)
                 {
                     // Each unique pawn have 4 moves each
                     // pID for pawns goes from 8 to 15
-                    srcPieceID = uint2(PAWN, floor((ID.x - 106) / 4) + 8);
-                    dest = (turn == WHITE ? pawnListW[(ID.x - 106) % 4] :
-                                            pawnListB[(ID.x - 106) % 4]);
+                    srcPieceID = uint2(PAWN, floor((ID.x - 114) / 4) + 8);
+                    dest = (turn == WHITE ? pawnListW[(ID.x - 114) % 4] :
+                                            pawnListB[(ID.x - 114) % 4]);
                 }
 
                 srcPieceID.x += turn << 3;
@@ -116,6 +107,34 @@
                 // Remember the board saves positions in (y, x) format
                 // y, x to x, y
                 src = int2(buff & 0xf, buff >> 4);
+
+                // Calculate destination based on source
+                [flatten]
+                // Rooks
+                if (ID.x < 28)
+                {
+                    // Half of the move-set goes horizontal, half vertical
+                    uint idMod = (ID.x % 14);
+                    dest.x = idMod < 7 ? idMod : src.x ;
+                    dest.y = idMod < 7 ? src.y : idMod - 7 ;
+                }
+                // Knights, do nothing
+                else if (ID.x < 44) {}
+                // Bishops
+                else if (ID.x < 70)
+                {
+                    uint sideCond = (ID.x % 13); // King/Queen side
+                    [flatten]
+                    // White / Queen side
+                    if (turn && sideCond < 6) {
+                        dest.x = 
+                        dest.y = 
+                    }
+                }
+                // Queen
+                else if (ID.x < 97)
+                {  }
+
                 dest = src + dest;
 
                 //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
@@ -141,13 +160,13 @@
             /*
                 Max moves per piece
                 Piece  Rq  Rk  Nq  Nk  Bq  Bk  Q   K  P
-                Moves  14  14  8   8   13  13  27  9  32  =  138 possible moves
+                Moves  14  14  8   8   15  15  31  9  32  =  146 possible moves
 
-                Every board generates 138 boards, one board is 2x2 pixels
-                276 x 2 pixels generated per board
+                Every board generates 146 boards, one board is 2x2 pixels
+                292 x 2 pixels generated per board
             */
 
-            #define BOARD_DIM      float2(276, 2)
+            #define BOARD_DIM      float2(292, 2)
 
             float4 frag (v2f ps) : SV_Target
             {

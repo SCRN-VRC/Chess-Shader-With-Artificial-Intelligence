@@ -68,6 +68,8 @@ static const uint pID[16] =
     324, 316, 308, 300
 };
 
+
+
 // Piece-Square Tables
 // https://www.chessprogramming.org/Simplified_Evaluation_Function
 
@@ -332,9 +334,12 @@ bool clearPath (uint4 boardArray[2], int2 source, int2 dest, uint3 srcColCapPawn
 
 bool validMove (uint4 boardArray[2], int2 source, int2 dest)
 {
-    bool valid = false;
-    if (all(source == dest)) return false;
 
+    // Termination conditions
+    if (all(source == dest)) return false; // Same place
+    if (any(dest < 1 || dest > 8)) return false; // Off board
+
+    bool valid = false;
     uint srcPiece = getPiece(boardArray, source);
 
     [branch] switch (srcPiece.x & kMask) {
