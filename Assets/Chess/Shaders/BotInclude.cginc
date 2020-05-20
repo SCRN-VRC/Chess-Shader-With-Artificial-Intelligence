@@ -57,8 +57,10 @@ static const uint2 searchID[7][2] =
 static const uint pID[16] =
 {
     // Queen side
+    // R, N, B, Q
     24, 16, 8, 0,
     // King side
+    // K, B, N, R
     124, 116, 108, 100,
     // Queen pawns
     224, 216, 208, 200,
@@ -198,6 +200,8 @@ uint4 newBoard (uint posID)
             1,1 1,2 1,3 1,4 1,5 1,6 1,7 1,8
             Pw  Pw  Pw  Pw  Pw  Pw  Pw  Pw
             2,1 2,2 2,3 2,4 2,5 2,6 2,7 2,8
+
+            For some stupid reason I made it (y, x)
 
             // Queen side
             0b 0001 0001 0001 0010 0001 0011 0001 0100
@@ -434,7 +438,7 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
 }
 
 uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
-    uint2 source, uint2 dest)
+    int2 source, int2 dest)
 {
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
     bool valid = validMove(boardArray, source, dest);
@@ -472,7 +476,7 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
         
         // Castling, compacted
         if ((srcPieceID.x & kMask) == KING && all(source ==
-            uint2(4, colP == WHITE ? 0 : 7))) {
+            int2(4, colP == WHITE ? 0 : 7))) {
 
             uint4 ind;
             // Array indicies for different sides
@@ -547,7 +551,7 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                 [unroll]
                 for (int j = 0; j < 32; j += 8) {
                     uint pos = 0xff & (boardPosArray[destX][k] >> j);
-                    if (all(uint2(pos & 0xf, pos >> 4) == dest + 1)) {
+                    if (all(int2(pos & 0xf, pos >> 4) == dest + 1)) {
                         uint destMask = 0xff << j;
                         boardPosArray[destX][k] &= ~destMask;
                     }
@@ -560,7 +564,7 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                 uint pos = (boardPosArray[destX][destY[i].x] >>
                     destY[i].y) & 0xff;
                 // y, x format flipped
-                if (all(uint2(pos & 0xf, pos >> 4) == dest + 1)) {
+                if (all(int2(pos & 0xf, pos >> 4) == dest + 1)) {
                     uint destMask = 0xff << destY[i].y;
                     boardPosArray[destX][destY[i].x] &= ~destMask;
                 }
@@ -608,7 +612,7 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
 
         // Castling, compacted
         if ((srcPieceID.x & kMask) == KING && all(source ==
-            uint2(4, colP == WHITE ? 0 : 7))) {
+            int2(4, colP == WHITE ? 0 : 7))) {
 
             uint4 ind;
             // Array indicies for different sides

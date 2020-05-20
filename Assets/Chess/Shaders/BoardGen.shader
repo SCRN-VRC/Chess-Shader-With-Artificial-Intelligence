@@ -38,14 +38,14 @@
                 float4 vertex : SV_POSITION;
             };
 
-            void findParent (out uint4 outBoard[4], uint3 ID)
+            void findParent (out uint4 outBoard[4], uint2 ID)
             {
-                Texture2D<float4> srcTex = ID.z == 0 ? _ControllerTex : _BufferTex;
+                Texture2D<float4> srcTex = ID.y == 0 ? _ControllerTex : _BufferTex;
                 // The bottom left pixel
                 int2 src = 0;
 
-                if (ID.z < 1) { src = 0; }
-                else if (ID.z < 139) { src = int2((ID.x - 1) * 2, 0); }
+                if (ID.y < 1) { src = 0; }
+                else if (ID.y < 139) { src = int2((ID.x - 1) * 2, 0); }
 
                 outBoard[B_LEFT] = srcTex.Load(int3(src.xy, 0));
                 outBoard[B_RIGHT] = srcTex.Load(int3(src.x + 1, src.y, 0));
@@ -53,44 +53,75 @@
                 outBoard[T_RIGHT] = srcTex.Load(int3(src.xy + 1, 0));
             }
 
-            //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
-            //    int2 source, int2 dest)
             /*
                 ID.x = Column id
                 ID.y = Row id
-                ID.z = Depth id
             */
-            uint4 genNewBoard (uint4 boardInput[4], uint3 ID, uint turn)
+            uint4 genNewBoard (uint4 boardInput[4], uint2 ID, uint turn)
             {
                 uint2 srcPieceID = 0;
-                uint2 src = 0;
-                uint2 dest = 0;
-                uint2 pieceLoc = 0;
+                int2 src = 0;
+                int2 dest = 0;
 
+                [flatten]
                 // Rooks, queen side then king side
-                if (ID.x < 28) { srcPieceID = uint2(ID.x < 14 ? 0 : 1, pID[0]); }
+                // srcPieceID.y contains the pID index for shifting
+                if (ID.x < 28)
+                {
+                    // King side rooks don't shift
+                    srcPieceID = uint2(ROOK, ID.x < 14 ? 0 : 7);
+                    dest = 0;
+                }
                 // Knights
                 else if (ID.x < 44)
-                { srcPieceID = uint2(ID.x < 36 ? 0 : 1, pID[1]); }
+                {
+                    srcPieceID = uint2(KNIGHT, ID.x < 36 ? 1 : 6);
+                    dest = knightList[(ID.x - 28) % 8];
+                }
                 // Bishops
                 else if (ID.x < 70)
-                { srcPieceID = uint2(ID.x < 57 ? 0 : 1, pID[2]); }
+                {
+                    srcPieceID = uint2(BISHOP, ID.x < 57 ? 2 : 5);
+                    dest = 0;
+                }
                 // Queen
+                // Kings/Queens don't need shifts srcPieceID.y shifts
                 else if (ID.x < 97)
-                { srcPieceID = uint2(0, pID[3]); }
+                {
+                    srcPieceID = uint2(QUEEN, 3);
+                    dest = 0;
+                }
                 // King
                 else if (ID.x < 106)
-                { srcPieceID = uint2(1, pID[3]); }
+                {
+                    srcPieceID = uint2(KING, 4);
+                    dest = kingList[ID.x - 97];
+                }
                 // Pawns
                 else if (ID.x < 138)
-                { srcPieceID = uint2(ID.x < 122 ? 2 : 3, pID[((ID.x - 106) / 4) % 4]); }
+                {
+                    // Each unique pawn have 4 moves each
+                    // pID for pawns goes from 8 to 15
+                    srcPieceID = uint2(PAWN, floor((ID.x - 106) / 4) + 8);
+                    dest = (turn == WHITE ? pawnListW[(ID.x - 106) % 4] :
+                                            pawnListB[(ID.x - 106) % 4]);
+                }
 
                 srcPieceID.x += turn << 3;
 
-                uint buff = boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
-                    [floor(srcPieceID.y / 100)];
+                // Find the source position
+                uint shift = srcPieceID.y - (floor(srcPieceID.y / 100) * 100);
+                uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
+                    [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
 
-                return doMove(boardInput, ID.x % 1 + ID.y % 1, srcPieceID, src, dest);
+                // Remember the board saves positions in (y, x) format
+                // y, x to x, y
+                src = int2(buff & 0xf, buff >> 4);
+                dest = src + dest;
+
+                //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
+                //    int2 source, int2 dest)
+                return doMove(boardInput, ID.y, srcPieceID, src, dest);
 
             }
 
