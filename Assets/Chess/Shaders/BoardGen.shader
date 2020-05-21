@@ -36,22 +36,6 @@
                 float4 vertex : SV_POSITION;
             };
 
-            void findParent (out uint4 outBoard[4], uint2 ID)
-            {
-                /// REDO
-                // Texture2D<float4> srcTex = ID.y == 0 ? _ControllerTex : _BufferTex;
-                // // The bottom left pixel
-                // int2 src = 0;
-
-                // if (ID.y < 1) { src = 0; }
-                // else if (ID.y < 139) { src = int2((ID.x - 1) * 2, 0); }
-
-                // outBoard[B_LEFT] = srcTex.Load(int3(src.xy, 0));
-                // outBoard[B_RIGHT] = srcTex.Load(int3(src.x + 1, src.y, 0));
-                // outBoard[T_LEFT] = srcTex.Load(int3(src.x, src.y + 1, 0));
-                // outBoard[T_RIGHT] = srcTex.Load(int3(src.xy + 1, 0));
-            }
-
             /*
                 ID.x = Column id
                 ID.y = Row id
@@ -117,26 +101,28 @@
                     uint idMod = (ID.x % 14);
                     dest.x = idMod < 7 ? idMod : src.x ;
                     dest.y = idMod < 7 ? src.y : idMod - 7 ;
+                    dest = src + dest;
                 }
                 // Knights, do nothing
-                else if (ID.x < 44) {}
+                else if (ID.x < 44) { dest = src + dest; }
                 // Bishops
-                else if (ID.x < 70)
+                else if (ID.x < 74)
                 {
-                    uint sideCond = (ID.x % 13); // King/Queen side
+                    int4 bOrigin = getBishopOrigin(src);
+                    uint IDcond = (ID.x % 15); // King/Queen side
                     [flatten]
                     // White / Queen side
-                    if (turn && sideCond < 6) {
-                        dest.x = 
-                        dest.y = 
+                    if (turn && IDcond < 7) {
+                        dest = getBishopOrigin(src).xy + int2(-1, 1) * IDcond;
+                    }
+                    else if (turn) {
+                        dest = getBishopOrigin(src).zw + int2(1, 1) * (IDcond - 7);
                     }
                 }
                 // Queen
-                else if (ID.x < 97)
+                else if (ID.x < 105)
                 {  }
-
-                dest = src + dest;
-
+                else if (ID.x < 146) { dest = src + dest; }
                 //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                 //    int2 source, int2 dest)
                 return doMove(boardInput, ID.y, srcPieceID, src, dest);

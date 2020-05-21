@@ -68,7 +68,31 @@ static const uint pID[16] =
     324, 316, 308, 300
 };
 
+/*
+    Bishop Move-set Table
+    Given the source position, return the base position for
+    destination
 
+    x,y - left to right base position
+    z,w - right to left base position
+*/
+
+static const int4 bishopTable[8][8] =
+{
+    8,1,1,8, 8,2,1,7, 8,3,1,6, 8,4,1,5, 8,5,1,4, 8,6,1,3, 8,7,1,2, 8,8,1,1,
+    7,1,1,7, 8,1,1,6, 8,2,1,5, 8,3,1,4, 8,4,1,3, 8,6,1,2, 8,6,1,1, 8,7,2,1,
+    6,1,1,6, 7,1,1,5, 8,1,1,4, 8,2,1,3, 8,3,1,2, 8,4,1,1, 8,5,2,1, 8,6,3,1,
+    5,1,1,5, 6,1,1,4, 7,1,1,3, 8,1,1,2, 8,2,1,1, 8,3,2,1, 8,4,3,1, 8,5,4,1,
+    4,1,1,4, 5,1,1,3, 6,1,1,2, 7,1,1,1, 8,1,2,1, 8,2,3,1, 8,3,4,1, 8,4,5,1,
+    3,1,1,3, 4,1,1,2, 5,1,1,1, 6,1,2,1, 7,1,3,1, 8,1,4,1, 8,2,5,1, 8,3,6,1,
+    2,1,1,2, 3,1,1,1, 4,1,2,1, 5,1,3,1, 6,1,4,1, 7,1,5,1, 8,1,6,1, 8,2,7,1,
+    1,1,1,1, 2,1,2,1, 3,1,3,1, 4,1,4,1, 5,1,5,1, 6,1,6,1, 7,1,7,1, 8,1,8,1
+};
+
+// Change origin to bottom left
+int4 getBishopOrigin(int2 src) {
+    return bishopTable[7 - src.y][src.x];
+}
 
 // Piece-Square Tables
 // https://www.chessprogramming.org/Simplified_Evaluation_Function
