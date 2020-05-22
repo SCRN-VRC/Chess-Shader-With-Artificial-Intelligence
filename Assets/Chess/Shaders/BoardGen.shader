@@ -33,7 +33,7 @@
 
             #define BOARD_DIM       float2(292, 2)
 
-            static const uint2 moveNum =
+            static const uint2 moveNum[7] =
             {
                 // Total    Cumulative
                 0,          0,      // Nothing
@@ -69,47 +69,8 @@
                 int2 src = 0;
                 int2 dest = 0;
                 uint idx_t = ID.x;
-                
-                // [flatten]
-                // // Rooks, queen side then king side
-                // // srcPieceID.y contains the pID index for shifting
-                // if (ID.x < ROOK_TOTAL)
-                // // King side rooks don't shift
-                // { srcPieceID = uint2(ROOK, ID.x < (ROOK_TOTAL * 0.5) ? 0 : 7); }
-                // // Knights
-                // else if (ID.x < KNIGHT_TOTAL)
-                // {
-                //     ID.x -= ROOK_TOTAL;
-                //     srcPieceID = uint2(KNIGHT, ID.x < (KNIGHT_TOTAL * 0.5) ? 1 : 6);
-                //     dest = knightList[ID.x % 8];
-                // }
-                // // Bishops
-                // else if (ID.x < BISHOP_TOTAL)
-                // {
-                //     ID.x -= KNIGHT_TOTAL;
-                //     srcPieceID = uint2(BISHOP, ID.x < 59 ? 2 : 5);
-                // }
-                // // Queen
-                // // Kings/Queens don't need shifts srcPieceID.y shifts
-                // else if (ID.x < 105)
-                // { srcPieceID = uint2(QUEEN, 3); }
-                // // King
-                // else if (ID.x < 114)
-                // {
-                //     srcPieceID = uint2(KING, 4);
-                //     dest = kingList[ID.x - 105];
-                // }
-                // // Pawns
-                // else if (ID.x < 146)
-                // {
-                //     // Each unique pawn have 4 moves each
-                //     // pID for pawns goes from 8 to 15
-                //     srcPieceID = uint2(PAWN, floor((ID.x - 114) / 4) + 8);
-                //     dest = (turn == WHITE ? pawnListW[(ID.x - 114) % 4] :
-                //                             pawnListB[(ID.x - 114) % 4]);
-                // }
 
-
+                // Pawns
                 if (idx_t < moveNum[PAWN].y)
                 {
                     // Each unique pawn have 4 moves each
@@ -118,13 +79,40 @@
                     dest = (turn == WHITE ? pawnListW[ID.x % 4] :
                                             pawnListB[ID.x % 4]);
                 }
+                // Knights
                 else if (idx_t < moveNum[KNIGHT].y)
                 {
                     idx_t -= moveNum[PAWN].y;
-                    srcPieceID = uint2(KNIGHT, idx_t < (moveNum[KNIGHT].x * 0.5) ? 1 : 6);
+                    srcPieceID = uint2(KNIGHT,
+                        idx_t < uint(moveNum[KNIGHT].x * 0.5) ? 1 : 6);
                     dest = knightList[idx_t % 8];
                 }
-
+                // Bishops
+                else if (idx_t < moveNum[BISHOP].y)
+                {
+                    idx_t -= moveNum[KNIGHT].y;
+                    srcPieceID = uint2(BISHOP,
+                        idx_t < uint(moveNum[BISHOP].x * 0.5) ? 2 : 5);
+                }
+                // Rooks
+                else if (idx_t < moveNum[ROOK].y)
+                // King side rooks don't shift
+                {
+                    idx_t -= moveNum[BISHOP].y;
+                    srcPieceID = uint2(ROOK,
+                        idx_t < uint(moveNum[ROOK].x * 0.5) ? 0 : 7);
+                }
+                // Queen
+                // Kings/Queens don't need shifts srcPieceID.y shifts
+                else if (idx_t < moveNum[QUEEN].y)
+                { srcPieceID = uint2(QUEEN, 3); }
+                // King
+                else if (idx_t < moveNum[KING].y)
+                {
+                    idx_t -= moveNum[QUEEN].y;
+                    srcPieceID = uint2(KING, 4);
+                    dest = kingList[idx_t];
+                }
 
                 srcPieceID.x += turn << 3;
 
@@ -133,30 +121,29 @@
                 uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
                     [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
 
-                // Remember the board saves positions in (y, x) format
+                // The board saves positions in (y, x) format
                 // y, x to x, y
                 src = int2(buff & 0xf, buff >> 4);
 
-                // Calculate destination based on source
-                [flatten]
-                // Rooks
-                if (ID.x < 28)
-                {
-                    // Half of the move-set goes horizontal, half vertical
-                    uint idMod = (ID.x % 14);
-                    dest.x = idMod < 7 ? idMod : src.x ;
-                    dest.y = idMod < 7 ? src.y : idMod - 7 ;
-                }
-                // Knights, do nothing
-                else if (ID.x < 44) { dest = src + dest; }
+                // Reset ID
+                idx_t = ID.x;
+
+                // Pawns
+                if (idx_t < moveNum[PAWN].y)
+                { dest = src + dest; }
+                // Knights
+                else if (idx_t < moveNum[KNIGHT].y)
+                { dest = src + dest; }
                 // Bishops
-                else if (ID.x < 74)
+                else if (idx_t < moveNum[BISHOP].y)
                 {
+                    idx_t -= moveNum[KNIGHT].y;
                     int4 bOrigin = getBishopOrigin(src);
-                    uint IDcond = (ID.x % 15); // King/Queen side
+                    // King/Queen side
+                    uint IDcond = fmod(idx_t, moveNum[BISHOP].x * 0.5);
                     [flatten]
                     // Queen side
-                    if (ID.x < 59)
+                    if (idx_t < uint(moveNum[BISHOP].x * 0.5))
                     {
                         // Since the bishop moves aren't mirror for the black pieces
                         dest = IDcond < (turn ? 7 : 8) ?
@@ -171,47 +158,49 @@
                             bOrigin.xy + int2(-1, 1) * (IDcond - (turn ? 7 : 8));
                     }
                 }
-                // Queen
-                else if (ID.x < 105)
+                // Rooks
+                else if (idx_t < moveNum[ROOK].y)
                 {
-                    // Reset ID to 0
-                    ID.x -= 74;
+                    idx_t -= moveNum[BISHOP].y;
                     // Half of the move-set goes horizontal, half vertical
+                    uint idMod = fmod(idx_t, moveNum[ROOK].x * 0.5);
+                    uint r = moveNum[ROOK].x * 0.25;
+                    dest.x = idMod < r ? idMod : src.x ;
+                    dest.y = idMod < r ? src.y : idMod - r ;
+                }
+                // Queen
+                else if (idx_t < moveNum[QUEEN].y)
+                {
+                    idx_t -= moveNum[ROOK].y;
                     [flatten]
                     // Rook like movement
-                    if (ID.x < 14) {
-                        dest.x = ID.x < 7 ? ID.x : src.x ;
-                        dest.y = ID.x < 7 ? src.y : ID.x - 7 ;
+                    if (idx_t < uint(moveNum[ROOK].x * 0.5)) {
+                        uint r = moveNum[ROOK].x * 0.25;
+                        dest.x = idx_t < r ? idx_t : src.x ;
+                        dest.y = idx_t < r ? src.y : idx_t - r ;
                     }
                     // Bishop like movement
                     else {
-                        // Reset ID to 0
-                        ID.x -= 28;
+                        idx_t -= moveNum[ROOK].x * 0.5;
                         int4 bOrigin = getBishopOrigin(src);
-                        uint IDcond = (ID.x % 15); // King/Queen side
-                        [flatten]
-                        // Queen side
-                        if (ID.x < 59)
-                        {
-                            // Since the bishop moves aren't mirror for the black pieces
-                            dest = IDcond < (turn ? 7 : 8) ?
-                                bOrigin.xy + int2(-1, 1) * IDcond :
-                                bOrigin.zw + int2(1, 1) * (IDcond - (turn ? 7 : 8));
-                        }
-                        // King side
-                        else
-                        {
-                            dest = IDcond < (turn ? 7 : 8) ?
-                                bOrigin.zw + int2(1, 1) * IDcond :
-                                bOrigin.xy + int2(-1, 1) * (IDcond - (turn ? 7 : 8));
-                        }
+                        // Different moves on white/black tiles
+                        bool onBlack = (src.x % 2 == src.y % 2);
+                        // [flatten]
+                        // if (idx_t < moveNum[BISHOP].x * 0.5)
+                        // {
+                            dest = idx_t < (onBlack ? 7 : 8) ?
+                                bOrigin.xy + int2(-1, 1) * idx_t :
+                                bOrigin.zw + int2(1, 1) * (idx_t - (onBlack ? 7 : 8));
+                        // }
                     }
                 }
-                // King and pawns
-                else if (ID.x < 146) { dest = src + dest; }
+                // King
+                else if (idx_t < moveNum[KING].y)
+                { dest = src + dest; }
 
                 //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                 //    int2 source, int2 dest)
+
                 return doMove(boardInput, ID.y, srcPieceID, src, dest);
 
             }
