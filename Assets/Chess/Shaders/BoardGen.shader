@@ -22,6 +22,29 @@
             #include "BotInclude.cginc"
             #include "Debugging.cginc"
 
+            /*
+                Max moves per piece
+                Piece  Rq  Rk  Nq  Nk  Bq  Bk  Q   K  P
+                Moves  16  16  8   8   15  15  31  9  32  =  150 possible moves
+
+                Every board generates 150 boards, one board is 2x2 pixels
+                300 x 2 pixels generated per board
+            */
+
+            #define BOARD_DIM       float2(292, 2)
+
+            static const uint2 moveNum =
+            {
+                // Total    Cumulative
+                0,          0,      // Nothing
+                32,         32,     // Pawns
+                16,         48,     // Knights
+                30,         78,     // Bishops
+                32,         110,    // Rooks
+                31,         141,    // Queen
+                9,          150     // King
+            };
+
             Texture2D<float4> _BufferTex;
             float _MaxDist;
 
@@ -45,41 +68,63 @@
                 uint2 srcPieceID = 0;
                 int2 src = 0;
                 int2 dest = 0;
+                uint idx_t = ID.x;
+                
+                // [flatten]
+                // // Rooks, queen side then king side
+                // // srcPieceID.y contains the pID index for shifting
+                // if (ID.x < ROOK_TOTAL)
+                // // King side rooks don't shift
+                // { srcPieceID = uint2(ROOK, ID.x < (ROOK_TOTAL * 0.5) ? 0 : 7); }
+                // // Knights
+                // else if (ID.x < KNIGHT_TOTAL)
+                // {
+                //     ID.x -= ROOK_TOTAL;
+                //     srcPieceID = uint2(KNIGHT, ID.x < (KNIGHT_TOTAL * 0.5) ? 1 : 6);
+                //     dest = knightList[ID.x % 8];
+                // }
+                // // Bishops
+                // else if (ID.x < BISHOP_TOTAL)
+                // {
+                //     ID.x -= KNIGHT_TOTAL;
+                //     srcPieceID = uint2(BISHOP, ID.x < 59 ? 2 : 5);
+                // }
+                // // Queen
+                // // Kings/Queens don't need shifts srcPieceID.y shifts
+                // else if (ID.x < 105)
+                // { srcPieceID = uint2(QUEEN, 3); }
+                // // King
+                // else if (ID.x < 114)
+                // {
+                //     srcPieceID = uint2(KING, 4);
+                //     dest = kingList[ID.x - 105];
+                // }
+                // // Pawns
+                // else if (ID.x < 146)
+                // {
+                //     // Each unique pawn have 4 moves each
+                //     // pID for pawns goes from 8 to 15
+                //     srcPieceID = uint2(PAWN, floor((ID.x - 114) / 4) + 8);
+                //     dest = (turn == WHITE ? pawnListW[(ID.x - 114) % 4] :
+                //                             pawnListB[(ID.x - 114) % 4]);
+                // }
 
-                [flatten]
-                // Rooks, queen side then king side
-                // srcPieceID.y contains the pID index for shifting
-                if (ID.x < 28)
-                // King side rooks don't shift
-                { srcPieceID = uint2(ROOK, ID.x < 14 ? 0 : 7); }
-                // Knights
-                else if (ID.x < 44)
-                {
-                    srcPieceID = uint2(KNIGHT, ID.x < 36 ? 1 : 6);
-                    dest = knightList[(ID.x - 28) % 8];
-                }
-                // Bishops
-                else if (ID.x < 74)
-                { srcPieceID = uint2(BISHOP, ID.x < 59 ? 2 : 5); }
-                // Queen
-                // Kings/Queens don't need shifts srcPieceID.y shifts
-                else if (ID.x < 105)
-                { srcPieceID = uint2(QUEEN, 3); }
-                // King
-                else if (ID.x < 114)
-                {
-                    srcPieceID = uint2(KING, 4);
-                    dest = kingList[ID.x - 105];
-                }
-                // Pawns
-                else if (ID.x < 146)
+
+                if (idx_t < moveNum[PAWN].y)
                 {
                     // Each unique pawn have 4 moves each
                     // pID for pawns goes from 8 to 15
-                    srcPieceID = uint2(PAWN, floor((ID.x - 114) / 4) + 8);
-                    dest = (turn == WHITE ? pawnListW[(ID.x - 114) % 4] :
-                                            pawnListB[(ID.x - 114) % 4]);
+                    srcPieceID = uint2(PAWN, floor(idx_t / 4) + 8);
+                    dest = (turn == WHITE ? pawnListW[ID.x % 4] :
+                                            pawnListB[ID.x % 4]);
                 }
+                else if (idx_t < moveNum[KNIGHT].y)
+                {
+                    idx_t -= moveNum[PAWN].y;
+                    srcPieceID = uint2(KNIGHT, idx_t < (moveNum[KNIGHT].x * 0.5) ? 1 : 6);
+                    dest = knightList[idx_t % 8];
+                }
+
 
                 srcPieceID.x += turn << 3;
 
@@ -129,17 +174,37 @@
                 // Queen
                 else if (ID.x < 105)
                 {
+                    // Reset ID to 0
+                    ID.x -= 74;
                     // Half of the move-set goes horizontal, half vertical
                     [flatten]
-                    // Rook like movement CHECK LOGIC
-                    if (ID.x - 74 < 28) {
-                        uint idMod = ((ID.x - 74) % 14);
-                        dest.x = idMod < 7 ? idMod : src.x ;
-                        dest.y = idMod < 7 ? src.y : idMod - 7 ;
+                    // Rook like movement
+                    if (ID.x < 14) {
+                        dest.x = ID.x < 7 ? ID.x : src.x ;
+                        dest.y = ID.x < 7 ? src.y : ID.x - 7 ;
                     }
                     // Bishop like movement
                     else {
-
+                        // Reset ID to 0
+                        ID.x -= 28;
+                        int4 bOrigin = getBishopOrigin(src);
+                        uint IDcond = (ID.x % 15); // King/Queen side
+                        [flatten]
+                        // Queen side
+                        if (ID.x < 59)
+                        {
+                            // Since the bishop moves aren't mirror for the black pieces
+                            dest = IDcond < (turn ? 7 : 8) ?
+                                bOrigin.xy + int2(-1, 1) * IDcond :
+                                bOrigin.zw + int2(1, 1) * (IDcond - (turn ? 7 : 8));
+                        }
+                        // King side
+                        else
+                        {
+                            dest = IDcond < (turn ? 7 : 8) ?
+                                bOrigin.zw + int2(1, 1) * IDcond :
+                                bOrigin.xy + int2(-1, 1) * (IDcond - (turn ? 7 : 8));
+                        }
                     }
                 }
                 // King and pawns
@@ -164,17 +229,6 @@
                     -1 : 1;
                 return o;
             }
-
-            /*
-                Max moves per piece
-                Piece  Rq  Rk  Nq  Nk  Bq  Bk  Q   K  P
-                Moves  14  14  8   8   15  15  31  9  32  =  146 possible moves
-
-                Every board generates 146 boards, one board is 2x2 pixels
-                292 x 2 pixels generated per board
-            */
-
-            #define BOARD_DIM      float2(292, 2)
 
             float4 frag (v2f ps) : SV_Target
             {
