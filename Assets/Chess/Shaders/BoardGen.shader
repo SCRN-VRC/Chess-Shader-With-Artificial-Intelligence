@@ -21,6 +21,7 @@
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
             #include "Debugging.cginc"
+            #include "Layout.cginc"
 
             /*
                 Max moves per piece
@@ -30,20 +31,6 @@
                 Every board generates 150 boards, one board is 2x2 pixels
                 300 x 2 pixels generated per board
             */
-
-            #define BOARD_DIM       float2(292, 2)
-
-            static const uint2 moveNum[7] =
-            {
-                // Total    Cumulative
-                0,          0,      // Nothing
-                32,         32,     // Pawns
-                16,         48,     // Knights
-                30,         78,     // Bishops
-                32,         110,    // Rooks
-                31,         141,    // Queen
-                9,          150     // King
-            };
 
             Texture2D<float4> _BufferTex;
             float _MaxDist;
@@ -205,6 +192,13 @@
 
             }
 
+            // Given the child (x, y) location, return the parent 
+            // of the generated board
+            int2 findParentBoard(int2 childLocation)
+            {
+
+            }
+
             v2f vert (appdata v)
             {
                 v2f o;
@@ -222,22 +216,43 @@
             float4 frag (v2f ps) : SV_Target
             {
                 clip(ps.uv.z);
+                uint2 px = floor(ps.uv.xy * _ScreenParams.xy);
                 float4 col = 0;
 
                 // UVs of set of boards generated per board
-                float2 boardsUV = fmod(ps.uv.xy * _ScreenParams.xy,
-                    BOARD_DIM) / BOARD_DIM;
+                float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
 
                 // UVs of a single board (2x2)
                 uint3 singleUV_ID;
-                singleUV_ID.xy = fmod(ps.uv.xy * _ScreenParams.xy, 2..xx);
+                singleUV_ID.xy = fmod(px, 2..xx);
                 // ID of each corner
                 singleUV_ID.z = singleUV_ID.y * 2 + singleUV_ID.x;
 
                 // Board number
                 uint boardID = ps.uv.y;
 
-                col = newBoard(singleUV_ID.z);
+                //col = newBoard(singleUV_ID.z);
+
+                [branch]
+                // Parameters to save
+                if (px.y >= txCurBoardBL.y)
+                {
+                    uint4 curBoard[4];
+                    curBoard[B_LEFT] =  LoadValue(_BufferTex, txCurBoardBL);
+                    curBoard[B_RIGHT] = LoadValue(_BufferTex, txCurBoardBR);
+                    curBoard[T_LEFT] =  LoadValue(_BufferTex, txCurBoardTL);
+                    curBoard[T_RIGHT] = LoadValue(_BufferTex, txCurBoardTR);
+
+                    StoreValue(txCurBoardBL, curBoard[B_LEFT], col,  txCurBoardBL);
+                    StoreValue(txCurBoardBL, curBoard[B_RIGHT], col, txCurBoardBR);
+                    StoreValue(txCurBoardBL, curBoard[T_LEFT], col,  txCurBoardTL);
+                    StoreValue(txCurBoardBL, curBoard[T_RIGHT], col, txCurBoardTR);
+                }
+                // Actual board
+                if (all(px < boardParams.zw))
+                {
+                    col = 1;
+                }
 
                 return col;
             }
