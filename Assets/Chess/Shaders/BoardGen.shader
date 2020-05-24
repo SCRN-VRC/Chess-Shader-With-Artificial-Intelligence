@@ -270,12 +270,11 @@
                     int2 dest = 0;
                     doMoveParams(parentBoard, px.x, turn.x,
                         srcPieceID, src, dest);
+                    if (all(px == uint2(0, 0))) buffer[0] = float4(parentBoard[2]);
                     uint4 o = doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest);
 
                 }
-                
-                //buffer[0] = findParentBoard(2).xyxy;
 
                 return col;
             }

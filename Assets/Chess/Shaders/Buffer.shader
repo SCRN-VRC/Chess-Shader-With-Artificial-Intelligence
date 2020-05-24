@@ -9,7 +9,8 @@
     {
         Tags { "RenderType"="Opaque" }
         Cull Off
-
+        Lighting Off
+        
         Pass
         {
             CGPROGRAM
