@@ -66,8 +66,8 @@
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 
-                uint2 src = uint2(4, 7);
-                uint2 dest = uint2(3, 7);
+                int2 src = int2(4, 7);
+                int2 dest = int2(3, 7);
                 uint pid = KING;
 
                 uint4 moved[2] = {
@@ -79,8 +79,6 @@
                     doMove(boardBottom, 2, uint2(pid, 4), src, dest),
                     doMove(boardBottom, 3, uint2(pid, 4), src, dest)
                 };
-
-                buffer[0] = (newPos[1] >> 24);
 
                 uint curPos = getPiece(moved, uv_id);
                 if (index > 0.5) {

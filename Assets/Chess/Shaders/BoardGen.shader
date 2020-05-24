@@ -47,14 +47,12 @@
             };
 
             /*
-                ID.x = Column id
-                ID.y = Row id
+                ID = Column id
             */
-            uint4 genNewBoard (uint4 boardInput[4], uint2 ID, uint turn)
+            void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
+                out uint2 srcPieceID, out int2 src, out int2 dest)
             {
-                uint2 srcPieceID = 0;
-                int2 src = 0;
-                int2 dest = 0;
+
                 uint idx_t = ID.x;
 
                 // Pawns
@@ -63,8 +61,8 @@
                     // Each unique pawn have 4 moves each
                     // pID for pawns goes from 8 to 15
                     srcPieceID = uint2(PAWN, floor(idx_t / 4) + 8);
-                    dest = (turn == WHITE ? pawnListW[ID.x % 4] :
-                                            pawnListB[ID.x % 4]);
+                    dest = (turn == WHITE ? pawnListW[idx_t % 4] :
+                                            pawnListB[idx_t % 4]);
                 }
                 // Knights
                 else if (idx_t < moveNum[KNIGHT].y)
@@ -184,19 +182,15 @@
                 // King
                 else if (idx_t < moveNum[KING].y)
                 { dest = src + dest; }
-
-                //doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
-                //    int2 source, int2 dest)
-
-                return doMove(boardInput, ID.y, srcPieceID, src, dest);
-
             }
 
-            // Given the child (x, y) location, return the parent 
+            // Given the board ID, return the parent position
             // of the generated board
-            int2 findParentBoard(int2 childLocation)
+            int2 findParentBoard(int boardSetID)
             {
-
+                return boardSetID == 0 ?
+                    txCurBoardBL :
+                    int2((boardSetID - 1) * 2, 0) ;
             }
 
             v2f vert (appdata v)
@@ -223,19 +217,24 @@
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
 
                 // UVs of a single board (2x2)
-                uint3 singleUV_ID;
+                float4 singleUV_ID = 0;
                 singleUV_ID.xy = fmod(px, 2..xx);
                 // ID of each corner
                 singleUV_ID.z = singleUV_ID.y * 2 + singleUV_ID.x;
 
-                // Board number
-                uint boardID = ps.uv.y;
+                // // ID for each board, 22500 total
+                // singleUV_ID.xy = fmod(floor(ps.uv.xy * _ScreenParams.xy * 0.5),
+                //     boardParams.zw * 0.5);
+                // singleUV_ID.w = singleUV_ID.y * (boardParams.w * 0.5) + singleUV_ID.x;
 
-                //col = newBoard(singleUV_ID.z);
+                // ID for each set of boards, 150 total
+                uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
+
+                uint4 turn = LoadValue(_BufferTex, txTurn);
 
                 [branch]
                 // Parameters to save
-                if (px.y >= txCurBoardBL.y)
+                if (px.y >= uint(txCurBoardBL.y))
                 {
                     uint4 curBoard[4];
                     curBoard[B_LEFT] =  LoadValue(_BufferTex, txCurBoardBL);
@@ -243,17 +242,40 @@
                     curBoard[T_LEFT] =  LoadValue(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValue(_BufferTex, txCurBoardTR);
 
-                    StoreValue(txCurBoardBL, curBoard[B_LEFT], col,  txCurBoardBL);
-                    StoreValue(txCurBoardBL, curBoard[B_RIGHT], col, txCurBoardBR);
-                    StoreValue(txCurBoardBL, curBoard[T_LEFT], col,  txCurBoardTL);
-                    StoreValue(txCurBoardBL, curBoard[T_RIGHT], col, txCurBoardTR);
+                    if (turn.x == 0) {
+                        curBoard[B_LEFT] = newBoard(B_LEFT);
+                        curBoard[B_RIGHT] = newBoard(B_RIGHT);
+                        curBoard[T_LEFT] = newBoard(T_LEFT);
+                        curBoard[T_RIGHT] = newBoard(T_RIGHT);
+                    }
+
+                    StoreValue(txCurBoardBL, curBoard[B_LEFT], col,  px);
+                    StoreValue(txCurBoardBR, curBoard[B_RIGHT], col, px);
+                    StoreValue(txCurBoardTL, curBoard[T_LEFT], col,  px);
+                    StoreValue(txCurBoardTR, curBoard[T_RIGHT], col, px);
+                    StoreValue(txTurn, turn, col, px);
                 }
                 // Actual board
-                if (all(px < boardParams.zw))
+                if (all(px < uint2(boardParams.zw)))
                 {
-                    col = 1;
-                }
+                    int2 parentPos = findParentBoard(boardSetID);
+                    uint4 parentBoard[4];
+                    parentBoard[B_LEFT] =  LoadValue(_BufferTex, parentPos);
+                    parentBoard[B_RIGHT] = LoadValue(_BufferTex, parentPos + int2(1, 0));
+                    parentBoard[T_LEFT] =  LoadValue(_BufferTex, parentPos + int2(0, 1));
+                    parentBoard[T_RIGHT] = LoadValue(_BufferTex, parentPos + int2(1, 1));
+                    
+                    // uint2 srcPieceID = 0;
+                    // int2 src = 0;
+                    // int2 dest = 0;
+                    // doMoveParams(parentBoard, px.x, turn.x,
+                    //     srcPieceID, src, dest);
+                    // uint4 o = doMove(parentBoard, uint(singleUV_ID.z), srcPieceID, src, dest);
 
+                }
+                
+                //buffer[0] = findParentBoard(2).xyxy;
+                
                 return col;
             }
 
