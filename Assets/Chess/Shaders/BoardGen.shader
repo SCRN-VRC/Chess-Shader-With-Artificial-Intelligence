@@ -211,7 +211,7 @@
             {
                 clip(ps.uv.z);
                 uint2 px = floor(ps.uv.xy * _ScreenParams.xy);
-                float4 col = 0;
+                uint4 col = 0;
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -265,17 +265,18 @@
                     parentBoard[T_LEFT] =  LoadValue(_BufferTex, parentPos + int2(0, 1));
                     parentBoard[T_RIGHT] = LoadValue(_BufferTex, parentPos + int2(1, 1));
                     
-                    // uint2 srcPieceID = 0;
-                    // int2 src = 0;
-                    // int2 dest = 0;
-                    // doMoveParams(parentBoard, px.x, turn.x,
-                    //     srcPieceID, src, dest);
-                    // uint4 o = doMove(parentBoard, uint(singleUV_ID.z), srcPieceID, src, dest);
+                    uint2 srcPieceID = 0;
+                    int2 src = 0;
+                    int2 dest = 0;
+                    doMoveParams(parentBoard, px.x, turn.x,
+                        srcPieceID, src, dest);
+                    uint4 o = doMove(parentBoard, uint(singleUV_ID.z),
+                        srcPieceID, src, dest);
 
                 }
                 
                 //buffer[0] = findParentBoard(2).xyxy;
-                
+
                 return col;
             }
 

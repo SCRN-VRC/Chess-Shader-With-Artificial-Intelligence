@@ -466,8 +466,8 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
     return valid;
 }
 
-uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
-    int2 source, int2 dest)
+uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
+    in int2 source, in int2 dest)
 {
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
     bool valid = validMove(boardArray, source, dest);
@@ -475,6 +475,8 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
 
     // Top pixels containing chess board
     uint colP = srcPieceID.x >> 3;
+
+    [branch]
     if (posID < 2) {
         uint srcMask = pMask << ((7 - source.x) * 4);
         uint destPiece = srcPieceID.x;
@@ -533,13 +535,23 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                         dest.x == 5 ? 0x400 : 0x40000 ;
 
             // If theres no obstruction, and the rook is preset
+            [flatten]
             if (ind2.y && ind2.z) {
                 // Move king extra step
                 dest.x += dest.x == 5 ? 1 : -1;
-                // Delete rook
-                boardPosArray[ind.z][ind.w] &= masks.x;
-                // Insert rook in new spot
-                boardPosArray[ind.z][ind.w] |= masks.y;
+                // Compiler complaining about l-values fix
+                [flatten]
+                if (ind.w == 0)
+                {
+                    // Delete rook
+                    boardPosArray[ind.z][0] &= masks.x;
+                    // Insert rook in new spot
+                    boardPosArray[ind.z][0] |= masks.y;
+                }
+                else {
+                    boardPosArray[ind.z][3] &= masks.x;
+                    boardPosArray[ind.z][3] |= masks.y;
+                }
             }
         }
 
@@ -550,7 +562,12 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
         uint2 srcXY;
         srcXY.x = source.y > 3 ? B_LEFT : B_RIGHT;
         srcXY.y = source.y > 3 ? source.y - 4 : source.y;
-        boardPosArray[srcXY.x][srcXY.y] &= ~srcMask;
+        // Compiler complaining about l-values fix
+        [flatten]
+        if (srcXY.y == 0) boardPosArray[srcXY.x][0] &= ~srcMask;
+        else if (srcXY.y == 1) boardPosArray[srcXY.x][1] &= ~srcMask;
+        else if (srcXY.y == 2) boardPosArray[srcXY.x][2] &= ~srcMask;
+        else if (srcXY.y == 3) boardPosArray[srcXY.x][3] &= ~srcMask;
 
         // Place piece in destination
         uint2 destXY;
@@ -558,8 +575,28 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
         destXY.y = dest.y > 3 ? dest.y - 4 : dest.y;
 
         uint destMask = pMask << ((7 - dest.x) * 4);
-        boardPosArray[destXY.x][destXY.y] &= ~destMask;
-        boardPosArray[destXY.x][destXY.y] |= destPiece;
+        // Compiler complaining about l-values fix
+        [flatten]
+        if (destXY.y == 0)
+        {
+            boardPosArray[destXY.x][0] &= ~destMask;
+            boardPosArray[destXY.x][0] |= destPiece;
+        }
+        else if (destXY.y == 1)
+        {
+            boardPosArray[destXY.x][1] &= ~destMask;
+            boardPosArray[destXY.x][1] |= destPiece;
+        }
+        else if (destXY.y == 2)
+        {
+            boardPosArray[destXY.x][2] &= ~destMask;
+            boardPosArray[destXY.x][2] |= destPiece;
+        }
+        else if (destXY.y == 3)
+        {
+            boardPosArray[destXY.x][3] &= ~destMask;
+            boardPosArray[destXY.x][3] |= destPiece;
+        }
 
         return posID == B_LEFT ? boardPosArray[B_LEFT] : boardPosArray[B_RIGHT];
     }
@@ -582,7 +619,10 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                     uint pos = 0xff & (boardPosArray[destX][k] >> j);
                     if (all(int2(pos & 0xf, pos >> 4) == dest + 1)) {
                         uint destMask = 0xff << j;
-                        boardPosArray[destX][k] &= ~destMask;
+                        // Compiler complaining about l-values fix
+                        [flatten]
+                        if (k == 2) { boardPosArray[destX][2] &= ~destMask; }
+                        else { boardPosArray[destX][3] &= ~destMask; }
                     }
                 }
             }
@@ -595,7 +635,12 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                 // y, x format flipped
                 if (all(int2(pos & 0xf, pos >> 4) == dest + 1)) {
                     uint destMask = 0xff << destY[i].y;
-                    boardPosArray[destX][destY[i].x] &= ~destMask;
+                    // Compiler complaining about l-values fix
+                    [flatten]
+                    if (destY[i].x == 0) boardPosArray[destX][0] &= ~destMask;
+                    else if (destY[i].x == 1) boardPosArray[destX][1] &= ~destMask;
+                    else if (destY[i].x == 2) boardPosArray[destX][2] &= ~destMask;
+                    else if (destY[i].x == 3) boardPosArray[destX][3] &= ~destMask;
                 }
             }
         }
@@ -608,9 +653,15 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
         uint off = (pID[srcPieceID.y] - srcXY.y * 100);
         uint srcMask = 0xff << off;
         srcMask = ~srcMask;
-        boardPosArray[srcXY.x][srcXY.y] &= srcMask;
+        // Compiler complaining about l-values fix
+        [flatten]
+        if (srcXY.y == 0) boardPosArray[srcXY.x][0] &= srcMask;
+        else if (srcXY.y == 1) boardPosArray[srcXY.x][1] &= srcMask;
+        else if (srcXY.y == 2) boardPosArray[srcXY.x][2] &= srcMask;
+        else if (srcXY.y == 3) boardPosArray[srcXY.x][3] &= srcMask;
 
         // Queen me
+        [branch]
         if ((srcPieceID.x & kMask) == PAWN &&
             ((dest.y == 0 && colP == BLACK) || (dest.y == 7 && colP == WHITE))) {
             // Due to the limitations of my chess board implementation
@@ -669,20 +720,35 @@ uint4 doMove(uint4 boardPosArray[4], uint posID, uint2 srcPieceID,
                         dest.x == 5 ? 0x86 : 0x84000000 ;
 
             // If theres no obstruction, and the rook is present
+            [flatten]
             if (ind2.y && ind2.z) {
                 // Move king extra step
                 dest.x += dest.x == 5 ? 1 : -1;
-                // Zero out rook position
-                boardPosArray[ind.x][ind.y] &= masks.x;
-                // Insert new rook position
-                boardPosArray[ind.x][ind.y] |= masks.y;
+                // Compiler complaining about l-values fix
+                [flatten]
+                if (ind.y == 0)
+                {
+                    // Delete rook
+                    boardPosArray[ind.x][0] &= masks.x;
+                    // Insert rook in new spot
+                    boardPosArray[ind.x][0] |= masks.y;
+                }
+                else {
+                    boardPosArray[ind.x][1] &= masks.x;
+                    boardPosArray[ind.x][1] |= masks.y;
+                }
             }
         }
 
         // New position
         dest = dest + 1;
         uint newPos = ((dest.y & pMask) << 4 | (dest.x & pMask)) << off;
-        boardPosArray[srcXY.x][srcXY.y] |= newPos;
+        // Compiler complaining about l-values fix
+        [flatten]
+        if (srcXY.y == 0) boardPosArray[srcXY.x][0] |= newPos;
+        else if (srcXY.y == 1) boardPosArray[srcXY.x][1] |= newPos;
+        else if (srcXY.y == 2) boardPosArray[srcXY.x][2] |= newPos;
+        else if (srcXY.y == 3) boardPosArray[srcXY.x][3] |= newPos;
 
         return posID == T_LEFT ? boardPosArray[T_LEFT] : boardPosArray[T_RIGHT];
     }
