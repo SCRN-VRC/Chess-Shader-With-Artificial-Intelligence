@@ -466,6 +466,11 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
     return valid;
 }
 
+/*
+    posID = Corner ID, which are the UVs
+    srcPieceID.x = Piece ID
+    srcPieceID.y = pID table index to determine how much to shift by
+*/
 uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
     in int2 source, in int2 dest)
 {

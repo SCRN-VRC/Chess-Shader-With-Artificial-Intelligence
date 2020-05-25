@@ -102,9 +102,12 @@
                 srcPieceID.x += turn << 3;
 
                 // Find the source position
-                uint shift = srcPieceID.y - (floor(srcPieceID.y / 100) * 100);
+                uint shift = pID[srcPieceID.y] -
+                    (floor(pID[srcPieceID.y] / 100) * 100);
                 uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
                     [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
+                
+                //buffer[0] = float4(buff.xxxx);
 
                 // The board saves positions in (y, x) format
                 // y, x to x, y
@@ -231,6 +234,7 @@
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
 
                 uint4 turn = LoadValue(_BufferTex, txTurn);
+                turn.x = _Time.y <= 1 ? 1 : turn.x;
 
                 [branch]
                 // Parameters to save
@@ -242,7 +246,7 @@
                     curBoard[T_LEFT] =  LoadValue(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValue(_BufferTex, txCurBoardTR);
 
-                    if (turn.x == 0) {
+                    if (turn.x == 1) {
                         curBoard[B_LEFT] = newBoard(B_LEFT);
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
@@ -257,6 +261,7 @@
                 }
                 // Actual board
                 if (all(px < uint2(boardParams.zw)))
+                //if (all(px == int2(0, 0)))
                 {
                     int2 parentPos = findParentBoard(boardSetID);
                     uint4 parentBoard[4];
@@ -270,8 +275,8 @@
                     int2 dest = 0;
                     doMoveParams(parentBoard, px.x, turn.x,
                         srcPieceID, src, dest);
-                    if (all(px == uint2(0, 0))) buffer[0] = float4(parentBoard[2]);
-                    uint4 o = doMove(parentBoard, uint(singleUV_ID.z),
+                    //if (all(px == uint2(0, 0))) buffer[0] = float4(src, dest);
+                    col = doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest);
 
                 }
