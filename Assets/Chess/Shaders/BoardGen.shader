@@ -98,6 +98,7 @@
                     srcPieceID = uint2(KING, 4);
                     dest = kingList[idx_t];
                 }
+                else srcPieceID = uint2(0, 0);
 
                 srcPieceID.x += turn << 3;
 
