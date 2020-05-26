@@ -59,10 +59,10 @@
 
                 int index = fmod(floor(_Time.y), 2);
                 // int index2 = fmod(floor(_Time.w / 8), 8);
-                //uint4 board[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
+                uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
 
-                uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
-                    castleTests[0][2], castleTests[0][3] };
+                // uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
+                //     castleTests[0][2], castleTests[0][3] };
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 

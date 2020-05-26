@@ -96,7 +96,7 @@
                 {
                     idx_t -= moveNum[QUEEN].y;
                     srcPieceID = uint2(KING, 4);
-                    dest = kingList[idx_t];
+                    dest = kingList[idx_t % 8];
                 }
                 else srcPieceID = uint2(0, 0);
 
@@ -261,8 +261,8 @@
                     StoreValue(txTurn, turn, col, px);
                 }
                 // Actual board
-                if (all(px < uint2(boardParams.zw)))
-                //if (all(px == int2(0, 0)))
+                //if (all(px < uint2(boardParams.zw)))
+                if (all(px == int2(2, 0)))
                 {
                     int2 parentPos = findParentBoard(boardSetID);
                     uint4 parentBoard[4];
@@ -274,9 +274,15 @@
                     uint2 srcPieceID = 0;
                     int2 src = 0;
                     int2 dest = 0;
-                    doMoveParams(parentBoard, px.x, turn.x,
+
+                // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
+                //     out uint2 srcPieceID, out int2 src, out int2 dest)
+
+                    doMoveParams(parentBoard, floor(px.x * 0.5), turn.x,
                         srcPieceID, src, dest);
-                    //if (all(px == uint2(0, 0))) buffer[0] = float4(src, dest);
+
+                    //buffer[0] = float4(floor(px.x * 0.5).xxxx);
+
                     col = doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest);
 
