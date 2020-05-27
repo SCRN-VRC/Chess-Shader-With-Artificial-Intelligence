@@ -108,12 +108,12 @@
                 uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
                     [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
                 
-                //buffer[0] = float4(buff.xxxx);
+
 
                 // The board saves positions in (y, x) format
                 // y, x to x, y make sure to -1 
                 src = int2(buff & 0xf, buff >> 4) - 1;
-
+                buffer[0] = float4(src.xyxy);
                 // Reset ID
                 idx_t = ID.x;
 
@@ -262,8 +262,8 @@
                     StoreValue(txTurn, turn, col, px);
                 }
                 // Actual board
-                if (all(px < uint2(boardParams.zw)))
-                //if (all(px == int2(6, 0)))
+                //if (all(px < uint2(boardParams.zw)))
+                if (all(px == int2(24, 0)))
                 {
                     int2 parentPos = findParentBoard(boardSetID);
                     uint4 parentBoard[4];
@@ -276,6 +276,9 @@
                     int2 src = 0;
                     int2 dest = 0;
 
+                    // Anything after the first row of boards is the following turn
+                    turn.x += px.y > 1 ? 1 : 0;
+
             // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
             //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
@@ -284,11 +287,13 @@
 
             // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
             //     in int2 source, in int2 dest)
-            
-                    // uint4 board[2] = { parentBoard[0], parentBoard[1] };
-                    // buffer[0] = float4(dest, validMove(board, src, dest).xx);
+
+                    //uint4 board[2] = { parentBoard[0], parentBoard[1] };
+                    //buffer[0] = float4(dest, validMove(board, src, dest).xx);
+                    //buffer[0] = float4(src, dest);
                     col = doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest);
+                    //buffer[0] = col;
                 }
 
                 return col;
