@@ -361,7 +361,7 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
 
     // Termination conditions
     if (all(source == dest)) return false; // Same place
-    if (any(dest < 1 || dest > 8)) return false; // Off board
+    if (any(dest < 0 || dest > 7)) return false; // Off board
 
     bool valid = false;
     uint srcPiece = getPiece(boardArray, source);
@@ -474,6 +474,7 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
 uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
     in int2 source, in int2 dest)
 {
+
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
     bool valid = validMove(boardArray, source, dest);
     if (!valid) return 0;

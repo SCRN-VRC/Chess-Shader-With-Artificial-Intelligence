@@ -111,8 +111,8 @@
                 //buffer[0] = float4(buff.xxxx);
 
                 // The board saves positions in (y, x) format
-                // y, x to x, y
-                src = int2(buff & 0xf, buff >> 4);
+                // y, x to x, y make sure to -1 
+                src = int2(buff & 0xf, buff >> 4) - 1;
 
                 // Reset ID
                 idx_t = ID.x;
@@ -170,6 +170,7 @@
                     }
                     // Bishop like movement
                     else {
+                        // FIX THIS, unsigned range conversion
                         idx_t -= moveNum[ROOK].x * 0.5;
                         int4 bOrigin = getBishopOrigin(src);
                         // Different moves on white/black tiles
@@ -235,7 +236,7 @@
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
 
                 uint4 turn = LoadValue(_BufferTex, txTurn);
-                turn.x = _Time.y <= 1 ? 1 : turn.x;
+                turn.x = _Time.y <= 1.0 ? 1 : turn.x;
 
                 [branch]
                 // Parameters to save
@@ -261,8 +262,8 @@
                     StoreValue(txTurn, turn, col, px);
                 }
                 // Actual board
-                //if (all(px < uint2(boardParams.zw)))
-                if (all(px == int2(2, 0)))
+                if (all(px < uint2(boardParams.zw)))
+                //if (all(px == int2(6, 0)))
                 {
                     int2 parentPos = findParentBoard(boardSetID);
                     uint4 parentBoard[4];
@@ -275,17 +276,19 @@
                     int2 src = 0;
                     int2 dest = 0;
 
-                // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
-                //     out uint2 srcPieceID, out int2 src, out int2 dest)
+            // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
+            //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
                     doMoveParams(parentBoard, floor(px.x * 0.5), turn.x,
                         srcPieceID, src, dest);
 
-                    //buffer[0] = float4(floor(px.x * 0.5).xxxx);
-
+            // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
+            //     in int2 source, in int2 dest)
+            
+                    // uint4 board[2] = { parentBoard[0], parentBoard[1] };
+                    // buffer[0] = float4(dest, validMove(board, src, dest).xx);
                     col = doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest);
-
                 }
 
                 return col;

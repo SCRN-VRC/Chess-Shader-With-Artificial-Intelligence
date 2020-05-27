@@ -7,6 +7,7 @@
         _Color3 ("Color 3", Color) = (1,1,1,1)
         _Color4 ("Color 4", Color) = (0,0,0,1)
         _AtlasTex ("Chess Pieces", 2D) = "white" {}
+        _BufferTex ("Buffer", 2D) = "black" {}
     }
     SubShader
     {
@@ -23,6 +24,7 @@
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
             #include "Debugging.cginc"
+            #include "Layout.cginc"
 
             struct appdata
             {
@@ -36,6 +38,7 @@
                 float4 vertex : SV_POSITION;
             };
 
+            Texture2D<float4> _BufferTex;
             sampler2D _AtlasTex;
             float3 _Color1;
             float3 _Color2;
@@ -66,30 +69,31 @@
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 
-                int2 src = int2(4, 7);
-                int2 dest = int2(3, 7);
-                uint pid = KING;
+                int2 src = int2(0, 1);
+                int2 dest = int2(0, 2);
+                uint pid = 9;
 
-                uint4 moved[2] = {
-                    doMove(boardBottom, 0, uint2(pid, 4), src, dest),
-                    doMove(boardBottom, 1, uint2(pid, 4), src, dest)
-                };
+                // uint4 moved[2] = {
+                //     doMove(boardBottom, 0, uint2(pid, 8), src, dest),
+                //     doMove(boardBottom, 1, uint2(pid, 8), src, dest)
+                // };
 
-                uint4 newPos[2] = {
-                    doMove(boardBottom, 2, uint2(pid, 4), src, dest),
-                    doMove(boardBottom, 3, uint2(pid, 4), src, dest)
-                };
+                // uint4 newPos[2] = {
+                //     doMove(boardBottom, 2, uint2(pid, 8), src, dest),
+                //     doMove(boardBottom, 3, uint2(pid, 8), src, dest)
+                // };
 
-                uint curPos = getPiece(moved, uv_id);
-                if (index > 0.5) {
+                uint curPos;// = getPiece(moved, uv_id);
+                //if (index > 0.5) {
                     curPos = getPiece(board, uv_id);
-                }
+                //}
 
                 float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 +
                     float2(0.14286 * (curPos & kMask), 0.14286 * (curPos >> 3)));
                 pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
                 bool clear = validMove(board, src, uv_id);
+
                 col = lerp(col, float3(0., 1., 0.), clear);
 
                 col = lerp(col.rgb, pc.rgb, pc.a);
