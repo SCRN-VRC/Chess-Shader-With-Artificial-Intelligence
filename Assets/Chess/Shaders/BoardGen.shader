@@ -212,7 +212,7 @@
                 return o;
             }
 
-            float4 frag (v2f ps) : SV_Target
+            uint4 frag (v2f ps) : SV_Target
             {
                 clip(ps.uv.z);
                 uint2 px = floor(ps.uv.xy * _ScreenParams.xy);
@@ -291,8 +291,8 @@
                     //uint4 board[2] = { parentBoard[0], parentBoard[1] };
                     //buffer[0] = float4(dest, validMove(board, src, dest).xx);
                     //buffer[0] = float4(src, dest);
-                    col = doMove(parentBoard, uint(singleUV_ID.z),
-                        srcPieceID, src, dest);
+                    col = (doMove(parentBoard, uint(singleUV_ID.z),
+                        srcPieceID, src, dest));
                     //buffer[0] = col;
                 }
 
