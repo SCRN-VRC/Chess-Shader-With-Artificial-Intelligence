@@ -86,3 +86,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+Assets/Chess/Textures/BoardsGenerated.renderTexture.png
+Assets/Chess/Textures/BoardsGenerated.renderTexture.png.meta

@@ -8,6 +8,7 @@
         _Color4 ("Color 4", Color) = (0,0,0,1)
         _AtlasTex ("Chess Pieces", 2D) = "white" {}
         _BufferTex ("Buffer", 2D) = "black" {}
+        _Pixel ("Pixel Check", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -44,6 +45,7 @@
             float3 _Color2;
             float3 _Color3;
             float3 _Color4;
+            uint2 _Pixel;
 
             v2f vert (appdata v)
             {
@@ -62,12 +64,20 @@
 
                 int index = fmod(floor(_Time.y), 2);
                 // int index2 = fmod(floor(_Time.w / 8), 8);
-                uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
+                //uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
 
                 // uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
                 //     castleTests[0][2], castleTests[0][3] };
 
+                uint4 boardBottom[4];
+                boardBottom[B_LEFT] =  LoadValue(_BufferTex, _Pixel);
+                boardBottom[B_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 0));
+                boardBottom[T_LEFT] =  LoadValue(_BufferTex, _Pixel + uint2(0, 1));
+                boardBottom[T_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 1));
+
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
+
+                buffer[0] = float4(boardBottom[0]);
 
                 int2 src = int2(0, 1);
                 int2 dest = int2(0, 2);
@@ -88,8 +98,8 @@
                     curPos = getPiece(board, uv_id);
                 //}
 
-                float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 +
-                    float2(0.14286 * (curPos & kMask), 0.14286 * (curPos >> 3)));
+                float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
+                float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
                 pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
                 bool clear = validMove(board, src, uv_id);

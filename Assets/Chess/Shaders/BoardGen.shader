@@ -4,6 +4,7 @@
     {
         _BufferTex ("Buffer", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.1
+        _Pixel ("Pixel Check", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -34,6 +35,7 @@
 
             Texture2D<float4> _BufferTex;
             float _MaxDist;
+            uint2 _Pixel;
 
             struct appdata
             {
@@ -78,6 +80,7 @@
                     idx_t -= moveNum[KNIGHT].y;
                     srcPieceID = uint2(BISHOP,
                         idx_t < uint(moveNum[BISHOP].x * 0.5) ? 2 : 5);
+                    dest = 0;
                 }
                 // Rooks
                 else if (idx_t < moveNum[ROOK].y)
@@ -86,11 +89,15 @@
                     idx_t -= moveNum[BISHOP].y;
                     srcPieceID = uint2(ROOK,
                         idx_t < uint(moveNum[ROOK].x * 0.5) ? 0 : 7);
+                    dest = 0;
                 }
                 // Queen
                 // Kings/Queens don't need shifts srcPieceID.y shifts
                 else if (idx_t < moveNum[QUEEN].y)
-                { srcPieceID = uint2(QUEEN, 3); }
+                {
+                    srcPieceID = uint2(QUEEN, 3);
+                    dest = 0;
+                }
                 // King
                 else if (idx_t < moveNum[KING].y)
                 {
@@ -98,8 +105,11 @@
                     srcPieceID = uint2(KING, 4);
                     dest = kingList[idx_t % 8];
                 }
-                else srcPieceID = uint2(0, 0);
-
+                else
+                {
+                    srcPieceID = 0;
+                    dest = 0;
+                }
                 srcPieceID.x += turn << 3;
 
                 // Find the source position
@@ -108,12 +118,10 @@
                 uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
                     [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
                 
-
-
                 // The board saves positions in (y, x) format
                 // y, x to x, y make sure to -1 
                 src = int2(buff & 0xf, buff >> 4) - 1;
-                buffer[0] = float4(src.xyxy);
+                //buffer[0] = float4(src.xyxy);
                 // Reset ID
                 idx_t = ID.x;
 
@@ -171,7 +179,7 @@
                     // Bishop like movement
                     else {
                         // FIX THIS, unsigned range conversion
-                        idx_t -= moveNum[ROOK].x * 0.5;
+                        idx_t -= uint(moveNum[ROOK].x * 0.5);
                         int4 bOrigin = getBishopOrigin(src);
                         // Different moves on white/black tiles
                         bool onBlack = (src.x % 2 == src.y % 2);
@@ -262,8 +270,8 @@
                     StoreValue(txTurn, turn, col, px);
                 }
                 // Actual board
-                //if (all(px < uint2(boardParams.zw)))
-                if (all(px == int2(24, 0)))
+                if (all(px < uint2(boardParams.zw)))
+                //if (all(px == _Pixel))
                 {
                     int2 parentPos = findParentBoard(boardSetID);
                     uint4 parentBoard[4];
@@ -293,7 +301,7 @@
                     //buffer[0] = float4(src, dest);
                     col = (doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest));
-                    //buffer[0] = col;
+                    //buffer[0] = float4(src, dest);
                 }
 
                 return col;
