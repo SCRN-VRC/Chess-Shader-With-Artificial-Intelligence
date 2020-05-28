@@ -24,12 +24,12 @@ static const uint2 moveNum[7] =
     9,          150     // King
 };
 
-inline float4 LoadValue( in Texture2D<float4> tex, in int2 re )
+inline uint4 LoadValue( in Texture2D<float4> tex, in int2 re )
 {
-    return tex.Load(int3(re, 0));
+    return asuint(tex.Load(int3(re, 0)));
 }
 
-inline void StoreValue( in int2 txPos, in float4 value, inout float4 col,
+inline void StoreValue( in int2 txPos, in uint4 value, inout uint4 col,
     in int2 fragPos )
 {
     col = all(fragPos == txPos) ? value : col;
