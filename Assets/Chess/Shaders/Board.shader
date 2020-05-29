@@ -66,45 +66,60 @@
                 // int index2 = fmod(floor(_Time.w / 8), 8);
                 //uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
 
-                uint4 boardBottom[4] = { pawnTests[4][0], pawnTests[4][1],
-                    pawnTests[4][2], pawnTests[4][3] };
+                // uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
+                //     castleTests[0][2], castleTests[0][3] };
 
-                // uint4 boardBottom[4];
-                // boardBottom[B_LEFT] =  LoadValue(_BufferTex, _Pixel);
-                // boardBottom[B_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 0));
-                // boardBottom[T_LEFT] =  LoadValue(_BufferTex, _Pixel + uint2(0, 1));
-                // boardBottom[T_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 1));
+                uint4 boardBottom[4];
+                boardBottom[B_LEFT] =  LoadValue(_BufferTex, _Pixel);
+                boardBottom[B_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 0));
+                boardBottom[T_LEFT] =  LoadValue(_BufferTex, _Pixel + uint2(0, 1));
+                boardBottom[T_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 1));
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 
-                buffer[0] = float4((boardBottom[3] & 0xffff0000) >> 16);
+                //buffer[0] = float4((boardBottom[2] & 0xffff0000));
 
-                int2 src = int2(2, 6);
-                int2 dest = int2(2, 4);
-                uint pid = PAWN;
+                int2 src = int2(0, 1);
+                int2 dest = int2(0, 2);
+                uint2 pid = uint2(9, 8);
 
-                uint4 moved[2] = {
-                    doMove(boardBottom, 0, uint2(pid, 10), src, dest),
-                    doMove(boardBottom, 1, uint2(pid, 10), src, dest)
-                };
+                // uint4 moved[4] = {
+                //     doMove(boardBottom, 0, pid, src, dest),
+                //     doMove(boardBottom, 1, pid, src, dest),
+                //     doMove(boardBottom, 2, pid, src, dest),
+                //     doMove(boardBottom, 3, pid, src, dest)
+                // };
 
-                uint4 newPos[2] = {
-                    doMove(boardBottom, 2, uint2(pid, 10), src, dest),
-                    doMove(boardBottom, 3, uint2(pid, 10), src, dest)
-                };
+                // uint4 newPos[2] = { moved[0], moved[1] };
 
-                uint curPos = getPiece(moved, uv_id);
-                if (index > 0.5) {
+                // boardBottom[0] = moved[0];
+                // boardBottom[1] = moved[1];
+                // boardBottom[2] = moved[2];
+                // boardBottom[3] = moved[3];
+                // board[0] = boardBottom[0];
+                // board[1] = boardBottom[1];
+                // src = int2(2, 6);
+                // dest = int2(2, 4);
+                // pid = uint2(PAWN, 10);
+                // moved[0] = doMove(boardBottom, 0, pid, src, dest);
+                // moved[1] = doMove(boardBottom, 1, pid, src, dest);
+                // moved[2] = doMove(boardBottom, 2, pid, src, dest);
+                // moved[3] = doMove(boardBottom, 3, pid, src, dest);
+                // newPos[0] = moved[0];
+                // newPos[1] = moved[1];
+
+                uint curPos;// = getPiece(newPos, uv_id);
+                //if (index > 0.5) {
                     curPos = getPiece(board, uv_id);
-                }
+                //}
 
                 float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
                 float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
                 pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
-                bool clear = validMove(board, src, uv_id);
+                // bool clear = validMove(board, src, uv_id);
 
-                col = lerp(col, float3(0., 1., 0.), clear);
+                // col = lerp(col, float3(0., 1., 0.), clear);
 
                 col = lerp(col.rgb, pc.rgb, pc.a);
 

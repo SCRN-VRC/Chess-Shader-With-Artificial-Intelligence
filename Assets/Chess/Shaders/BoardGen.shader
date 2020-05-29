@@ -290,7 +290,7 @@
             // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
             //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
-                    doMoveParams(parentBoard, floor(px.x * 0.5), turn.x,
+                    doMoveParams(parentBoard, floor(px.x * 0.5), turn.x % 2,
                         srcPieceID, src, dest);
 
             // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
@@ -301,7 +301,7 @@
                     //buffer[0] = float4(src, dest);
                     col = (doMove(parentBoard, uint(singleUV_ID.z),
                         srcPieceID, src, dest));
-                    //buffer[0] = float4(src, dest);
+                    if (all(px == _Pixel)) buffer[0] = float4(src, srcPieceID);
                 }
 
                 return col;
