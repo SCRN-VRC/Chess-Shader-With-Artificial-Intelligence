@@ -66,37 +66,37 @@
                 // int index2 = fmod(floor(_Time.w / 8), 8);
                 //uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
 
-                // uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
-                //     castleTests[0][2], castleTests[0][3] };
+                uint4 boardBottom[4] = { pawnTests[4][0], pawnTests[4][1],
+                    pawnTests[4][2], pawnTests[4][3] };
 
-                uint4 boardBottom[4];
-                boardBottom[B_LEFT] =  LoadValue(_BufferTex, _Pixel);
-                boardBottom[B_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 0));
-                boardBottom[T_LEFT] =  LoadValue(_BufferTex, _Pixel + uint2(0, 1));
-                boardBottom[T_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 1));
+                // uint4 boardBottom[4];
+                // boardBottom[B_LEFT] =  LoadValue(_BufferTex, _Pixel);
+                // boardBottom[B_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 0));
+                // boardBottom[T_LEFT] =  LoadValue(_BufferTex, _Pixel + uint2(0, 1));
+                // boardBottom[T_RIGHT] = LoadValue(_BufferTex, _Pixel + uint2(1, 1));
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 
-                buffer[0] = float4(boardBottom[0]);
+                buffer[0] = float4((boardBottom[3] & 0xffff0000) >> 16);
 
-                int2 src = int2(0, 1);
-                int2 dest = int2(0, 2);
-                uint pid = 9;
+                int2 src = int2(2, 6);
+                int2 dest = int2(2, 4);
+                uint pid = PAWN;
 
-                // uint4 moved[2] = {
-                //     doMove(boardBottom, 0, uint2(pid, 8), src, dest),
-                //     doMove(boardBottom, 1, uint2(pid, 8), src, dest)
-                // };
+                uint4 moved[2] = {
+                    doMove(boardBottom, 0, uint2(pid, 10), src, dest),
+                    doMove(boardBottom, 1, uint2(pid, 10), src, dest)
+                };
 
-                // uint4 newPos[2] = {
-                //     doMove(boardBottom, 2, uint2(pid, 8), src, dest),
-                //     doMove(boardBottom, 3, uint2(pid, 8), src, dest)
-                // };
+                uint4 newPos[2] = {
+                    doMove(boardBottom, 2, uint2(pid, 10), src, dest),
+                    doMove(boardBottom, 3, uint2(pid, 10), src, dest)
+                };
 
-                uint curPos;// = getPiece(moved, uv_id);
-                //if (index > 0.5) {
+                uint curPos = getPiece(moved, uv_id);
+                if (index > 0.5) {
                     curPos = getPiece(board, uv_id);
-                //}
+                }
 
                 float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
                 float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
