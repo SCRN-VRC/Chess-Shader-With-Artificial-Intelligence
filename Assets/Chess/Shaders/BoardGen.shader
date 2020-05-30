@@ -224,7 +224,7 @@
             {
                 clip(ps.uv.z);
                 int2 px = floor(ps.uv.xy * _ScreenParams.xy);
-                uint4 col = _BufferTex.Load(int3(px, 0));
+                uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -261,13 +261,17 @@
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
                     if (floor(turnWinUpdate.x) == 1) {
-                        curBoard[B_LEFT] = newBoard(B_LEFT);
-                        curBoard[B_RIGHT] = newBoard(B_RIGHT);
-                        curBoard[T_LEFT] = newBoard(T_LEFT);
-                        curBoard[T_RIGHT] = newBoard(T_RIGHT);
+                        // curBoard[B_LEFT] = newBoard(B_LEFT);
+                        // curBoard[B_RIGHT] = newBoard(B_RIGHT);
+                        // curBoard[T_LEFT] = newBoard(T_LEFT);
+                        // curBoard[T_RIGHT] = newBoard(T_RIGHT);
+                        curBoard[B_LEFT] = knightTests[0][B_LEFT];
+                        curBoard[B_RIGHT] = knightTests[0][B_RIGHT];
+                        curBoard[T_LEFT] = knightTests[0][T_LEFT];
+                        curBoard[T_RIGHT] = knightTests[0][T_RIGHT];
                     }
 
-                    turnWinUpdate.z = turnWinUpdate.z < 1.0 ?
+                    turnWinUpdate.z = turnWinUpdate.z < 6.0 ?
                         turnWinUpdate.z + 1.0 :
                         turnWinUpdate.z;
 
@@ -320,7 +324,7 @@
                             srcPieceID, src, dest));
                     }
 
-                    //if (all(px == _Pixel)) buffer[0] = float4(turnWinUpdate.xyzz);
+                    if (all(px == _Pixel)) buffer[0] = float4(turnWinUpdate.xyzz);
                 }
 
                 return col;

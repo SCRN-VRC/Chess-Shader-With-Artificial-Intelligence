@@ -11,8 +11,10 @@
 // z, w dimensions of all boards combined
 #define boardParams        float4(300, 2, 300, 302)
 
+// Number of rows we update each frame
 static const int boardDiv = floor(boardParams.x / 5.0);
 
+// Index of texture area to update per frame
 static const int boardUpdate[7] = 
 {
     0,

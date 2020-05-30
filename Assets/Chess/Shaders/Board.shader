@@ -70,10 +70,10 @@
                 //     castleTests[0][2], castleTests[0][3] };
 
                 uint4 boardBottom[4];
-                boardBottom[B_LEFT] =  LoadValueUint(_BufferTex, _Pixel);
-                boardBottom[B_RIGHT] = LoadValueUint(_BufferTex, _Pixel + uint2(1, 0));
-                boardBottom[T_LEFT] =  LoadValueUint(_BufferTex, _Pixel + uint2(0, 1));
-                boardBottom[T_RIGHT] = LoadValueUint(_BufferTex, _Pixel + uint2(1, 1));
+                boardBottom[B_LEFT] =  LoadValueUint(_BufferTex, _Pixel * 2);
+                boardBottom[B_RIGHT] = LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0));
+                boardBottom[T_LEFT] =  LoadValueUint(_BufferTex, _Pixel * 2 + uint2(0, 1));
+                boardBottom[T_RIGHT] = LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 1));
 
                 uint4 board[2] = { boardBottom[0], boardBottom[1] };
 
