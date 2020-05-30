@@ -35,7 +35,7 @@
 
             Texture2D<float4> _BufferTex;
             float _MaxDist;
-            uint2 _Pixel;
+            int2 _Pixel;
 
             struct appdata
             {
@@ -223,8 +223,8 @@
             uint4 frag (v2f ps) : SV_Target
             {
                 clip(ps.uv.z);
-                uint2 px = floor(ps.uv.xy * _ScreenParams.xy);
-                uint4 col = 0;
+                int2 px = floor(ps.uv.xy * _ScreenParams.xy);
+                uint4 col = _BufferTex.Load(int3(px, 0));
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -243,65 +243,84 @@
                 // ID for each set of boards, 150 total
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
 
-                uint4 turn = LoadValue(_BufferTex, txTurn);
-                turn.x = _Time.y <= 1.0 ? 1 : turn.x;
+                float4 turnWinUpdate = LoadValueFloat(_BufferTex, txTurnWinUpdate);
+                
+                // Initialize the shaduuurrr
+                if (_Time.y < 1.0) {
+                    turnWinUpdate.xyz = float3(1.0, -1.0, 0.0);
+                }
 
                 [branch]
                 // Parameters to save
-                if (px.y >= uint(txCurBoardBL.y))
+                if (px.y >= int(txCurBoardBL.y))
                 {
                     uint4 curBoard[4];
-                    curBoard[B_LEFT] =  LoadValue(_BufferTex, txCurBoardBL);
-                    curBoard[B_RIGHT] = LoadValue(_BufferTex, txCurBoardBR);
-                    curBoard[T_LEFT] =  LoadValue(_BufferTex, txCurBoardTL);
-                    curBoard[T_RIGHT] = LoadValue(_BufferTex, txCurBoardTR);
+                    curBoard[B_LEFT] =  LoadValueUint(_BufferTex, txCurBoardBL);
+                    curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
+                    curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
+                    curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
-                    if (turn.x == 1) {
+                    if (floor(turnWinUpdate.x) == 1) {
                         curBoard[B_LEFT] = newBoard(B_LEFT);
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
 
-                    StoreValue(txCurBoardBL, curBoard[B_LEFT], col,  px);
-                    StoreValue(txCurBoardBR, curBoard[B_RIGHT], col, px);
-                    StoreValue(txCurBoardTL, curBoard[T_LEFT], col,  px);
-                    StoreValue(txCurBoardTR, curBoard[T_RIGHT], col, px);
-                    StoreValue(txTurn, turn, col, px);
+                    turnWinUpdate.z = turnWinUpdate.z < 1.0 ?
+                        turnWinUpdate.z + 1.0 :
+                        turnWinUpdate.z;
+
+                    StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
+                    StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
+                    StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
+                    StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
+                    StoreValueFloat(txTurnWinUpdate, turnWinUpdate, col, px);
                 }
                 // Actual board
-                if (all(px < uint2(boardParams.zw)))
+                if (all(px < int2(boardParams.zw)))
                 //if (all(px == _Pixel))
                 {
-                    int2 parentPos = findParentBoard(boardSetID);
-                    uint4 parentBoard[4];
-                    parentBoard[B_LEFT] =  LoadValue(_BufferTex, parentPos);
-                    parentBoard[B_RIGHT] = LoadValue(_BufferTex, parentPos + int2(1, 0));
-                    parentBoard[T_LEFT] =  LoadValue(_BufferTex, parentPos + int2(0, 1));
-                    parentBoard[T_RIGHT] = LoadValue(_BufferTex, parentPos + int2(1, 1));
-                    
-                    uint2 srcPieceID = 0;
-                    int2 src = 0;
-                    int2 dest = 0;
+                    // Stagger the move generation for slower GPUs
+                    if (turnWinUpdate.z < 6.0 &&
+                        px.y >= boardUpdate[int(turnWinUpdate.z)] &&
+                        px.y < boardUpdate[int(turnWinUpdate.z + 1.0)])
+                    {
+                        int2 parentPos = findParentBoard(boardSetID);
+                        uint4 parentBoard[4];
+                        parentBoard[B_LEFT] =  LoadValueUint(_BufferTex, parentPos);
+                        parentBoard[B_RIGHT] = LoadValueUint(_BufferTex, parentPos +
+                            int2(1, 0));
+                        parentBoard[T_LEFT] =  LoadValueUint(_BufferTex, parentPos +
+                            int2(0, 1));
+                        parentBoard[T_RIGHT] = LoadValueUint(_BufferTex, parentPos +
+                            int2(1, 1));
+                        
+                        uint2 srcPieceID = 0;
+                        int2 src = 0;
+                        int2 dest = 0;
 
-                    // Anything after the first row of boards is the following turn
-                    turn.x += px.y > 1 ? 1 : 0;
+                        // Anything after the first row of boards is the following turn
+                        turnWinUpdate.x += px.y > 1 ? 1.0 : 0.0;
 
-            // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
-            //     out uint2 srcPieceID, out int2 src, out int2 dest)
+                // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
+                //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
-                    doMoveParams(parentBoard, floor(px.x * 0.5), turn.x % 2,
-                        srcPieceID, src, dest);
+                        doMoveParams(parentBoard, floor(px.x * 0.5),
+                            uint(fmod(turnWinUpdate.x, 2)),
+                            srcPieceID, src, dest);
 
-            // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
-            //     in int2 source, in int2 dest)
+                // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
+                //     in int2 source, in int2 dest)
 
-                    //uint4 board[2] = { parentBoard[0], parentBoard[1] };
-                    //buffer[0] = float4(dest, validMove(board, src, dest).xx);
-                    //buffer[0] = float4(src, dest);
-                    col = (doMove(parentBoard, uint(singleUV_ID.z),
-                        srcPieceID, src, dest));
-                    if (all(px == _Pixel)) buffer[0] = float4(src, srcPieceID);
+                        //uint4 board[2] = { parentBoard[0], parentBoard[1] };
+                        //buffer[0] = float4(dest, validMove(board, src, dest).xx);
+                        //buffer[0] = float4(src, dest);
+                        col = (doMove(parentBoard, uint(singleUV_ID.z),
+                            srcPieceID, src, dest));
+                    }
+
+                    //if (all(px == _Pixel)) buffer[0] = float4(turnWinUpdate.xyzz);
                 }
 
                 return col;

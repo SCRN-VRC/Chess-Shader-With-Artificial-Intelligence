@@ -1,6 +1,8 @@
 ﻿#ifndef _DEBUGGING
 #define _DEBUGGING
 
+RWStructuredBuffer<float4> buffer : register(u1);
+
 static const uint4 pawnTests[5][4] =
 {
     /*

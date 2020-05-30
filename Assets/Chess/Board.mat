@@ -4,8 +4,9 @@
 Material:
   serializedVersion: 6
   m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
   m_Name: Board
   m_Shader: {fileID: 4800000, guid: 32efb892fb0c66040b85f5c3b4bad4c2, type: 3}
   m_ShaderKeywords: 
@@ -20,6 +21,10 @@ Material:
     m_TexEnvs:
     - _AtlasTex:
         m_Texture: {fileID: 2800000, guid: fef4039bb7044ad489c83ca05e37f2aa, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _BufferTex:
+        m_Texture: {fileID: 8400000, guid: bf73458dffc6abe459ea0cd4cfdf7763, type: 2}
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     - _BumpMap:
@@ -82,3 +87,4 @@ Material:
     - _Color3: {r: 1, g: 1, b: 1, a: 1}
     - _Color4: {r: 0, g: 0, b: 0, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _Pixel: {r: 54, g: 0, b: 0, a: 0}

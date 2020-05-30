@@ -1,8 +1,6 @@
 #ifndef _BOT_INCLUDE
 #define _BOT_INCLUDE
 
-            RWStructuredBuffer<float4> buffer : register(u1);
-
 #define PAWN        1   // 0001
 #define KNIGHT      2   // 0010
 #define BISHOP      3   // 0011
