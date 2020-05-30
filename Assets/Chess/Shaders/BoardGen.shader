@@ -265,10 +265,10 @@
                         // curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         // curBoard[T_LEFT] = newBoard(T_LEFT);
                         // curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        curBoard[B_LEFT] = knightTests[0][B_LEFT];
-                        curBoard[B_RIGHT] = knightTests[0][B_RIGHT];
-                        curBoard[T_LEFT] = knightTests[0][T_LEFT];
-                        curBoard[T_RIGHT] = knightTests[0][T_RIGHT];
+                        curBoard[B_LEFT] = bishopTests[0][B_LEFT];
+                        curBoard[B_RIGHT] = bishopTests[0][B_RIGHT];
+                        curBoard[T_LEFT] = bishopTests[0][T_LEFT];
+                        curBoard[T_RIGHT] = bishopTests[0][T_RIGHT];
                     }
 
                     turnWinUpdate.z = turnWinUpdate.z < 6.0 ?
@@ -282,7 +282,7 @@
                     StoreValueFloat(txTurnWinUpdate, turnWinUpdate, col, px);
                 }
                 // Actual board
-                if (all(px < int2(boardParams.zw)))
+                else if (all(px < int2(boardParams.zw)))
                 //if (all(px == _Pixel))
                 {
                     // Stagger the move generation for slower GPUs
