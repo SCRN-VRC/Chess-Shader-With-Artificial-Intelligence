@@ -265,10 +265,10 @@
                         // curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         // curBoard[T_LEFT] = newBoard(T_LEFT);
                         // curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        curBoard[B_LEFT] = bishopTests[0][B_LEFT];
-                        curBoard[B_RIGHT] = bishopTests[0][B_RIGHT];
-                        curBoard[T_LEFT] = bishopTests[0][T_LEFT];
-                        curBoard[T_RIGHT] = bishopTests[0][T_RIGHT];
+                        curBoard[B_LEFT] = bishopTests[1][B_LEFT];
+                        curBoard[B_RIGHT] = bishopTests[1][B_RIGHT];
+                        curBoard[T_LEFT] = bishopTests[1][T_LEFT];
+                        curBoard[T_RIGHT] = bishopTests[1][T_RIGHT];
                     }
 
                     turnWinUpdate.z = turnWinUpdate.z < 6.0 ?
@@ -322,11 +322,9 @@
                         //buffer[0] = float4(src, dest);
                         col = (doMove(parentBoard, uint(singleUV_ID.z),
                             srcPieceID, src, dest));
+                        if (all(px == _Pixel * 2)) buffer[0] = float4(src, dest);
                     }
-
-                    if (all(px == _Pixel)) buffer[0] = float4(turnWinUpdate.xyzz);
                 }
-
                 return col;
             }
 
