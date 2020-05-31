@@ -265,10 +265,10 @@
                         // curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         // curBoard[T_LEFT] = newBoard(T_LEFT);
                         // curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        curBoard[B_LEFT] = bishopTests[1][B_LEFT];
-                        curBoard[B_RIGHT] = bishopTests[1][B_RIGHT];
-                        curBoard[T_LEFT] = bishopTests[1][T_LEFT];
-                        curBoard[T_RIGHT] = bishopTests[1][T_RIGHT];
+                        curBoard[B_LEFT] = rookTests[1][B_LEFT];
+                        curBoard[B_RIGHT] = rookTests[1][B_RIGHT];
+                        curBoard[T_LEFT] = rookTests[1][T_LEFT];
+                        curBoard[T_RIGHT] = rookTests[1][T_RIGHT];
                     }
 
                     turnWinUpdate.z = turnWinUpdate.z < 6.0 ?
