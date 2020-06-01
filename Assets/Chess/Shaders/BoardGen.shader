@@ -239,10 +239,12 @@
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
 
                 float4 turnWinUpdateLate = LoadValueFloat(_BufferTex, txTurnWinUpdateLate);
-                
+                float4 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
+
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0) {
                     turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0.0, 0.0);
+                    kingMoved.xyzw = 0.0;
                 }
 
                 [branch]
@@ -276,23 +278,43 @@
                     turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 ?
                         turnWinUpdateLate.z + 1.0 :
                         turnWinUpdateLate.z;
+                    
+                    uint4 buf;
+                    // Check if king moved, for castling
+                    bool2 moved;
+                    moved.x = kingMoved.x > 0.0 ? true : false;
+                    moved.y = kingMoved.y > 0.0 ? true : false;
+                    buf.x = curBoard[T_LEFT][1];
+                    buf.y = curBoard[T_RIGHT][1];
+                    buf = (buf >> 24) & 0xff;
+                    moved.x = moved.x || (uint2(buf.x >> 4, buf.x & 0xf) == 
+                        uint2(1, 5) ? false : true);
+                    moved.y = moved.y || (uint2(buf.y >> 4, buf.y & 0xf) == 
+                        uint2(8, 5) ? false : true);
+                    kingMoved.x = moved.x ? 1.0 : 0.0;
+                    kingMoved.y = moved.y ? 1.0 : 0.0;
 
                     // Check if current board is in late game
                     bool lateGame = turnWinUpdateLate.w > 0.0 ? true : false;
                     // Both sides no queens
-                    uint2 buf;
                     buf.x = curBoard[T_LEFT][0];
                     buf.y = curBoard[T_RIGHT][0];
-                    buf = (buf >> 24) & 0xff;
-                    lateGame |= dot(float4(buf.x & 0xf, buf.x >> 4,
-                        buf.y & 0xf, buf.y >> 4), 1..xxxx) > 0.0 ? true : false;
+                    buf = buf & 0xff;
+                    lateGame = lateGame || ((buf.x + buf.y) > 0 ? false : true);
                     // One queen no pieces
+                    buf.x = curBoard[T_LEFT][0] & 0xffffff00;
+                    buf.y = curBoard[T_LEFT][1] & 0x00ffffff;
+                    buf.z = curBoard[T_RIGHT][0] & 0xffffff00;
+                    buf.w = curBoard[T_RIGHT][1] & 0x00ffffff;
+
                     // Minor piece only
+                    turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
+                    StoreValueFloat(txKingMoved, kingMoved, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                 }
                 // Actual board

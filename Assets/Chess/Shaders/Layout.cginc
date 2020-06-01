@@ -6,6 +6,7 @@
 #define txCurBoardTL                    int2(0, 511)
 #define txCurBoardTR                    int2(1, 511)
 #define txTurnWinUpdateLate             int2(2, 511)
+#define txKingMoved                     int2(3, 511)
 #define txEvalArea                      int4(362, 511, 511, 511)
 
 // x, y dimensions of set of board group generated per board
