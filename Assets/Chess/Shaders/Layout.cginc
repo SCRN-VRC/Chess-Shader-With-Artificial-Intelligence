@@ -1,11 +1,12 @@
 #ifndef _LAYOUT
 #define _LAYOUT
 
-#define txCurBoardBL       int2(0, 510)
-#define txCurBoardBR       int2(1, 510)
-#define txCurBoardTL       int2(0, 511)
-#define txCurBoardTR       int2(1, 511)
-#define txTurnWinUpdate    int2(2, 511)
+#define txCurBoardBL                    int2(0, 510)
+#define txCurBoardBR                    int2(1, 510)
+#define txCurBoardTL                    int2(0, 511)
+#define txCurBoardTR                    int2(1, 511)
+#define txTurnWinUpdateLate             int2(2, 511)
+#define txEvalArea                      int4(362, 511, 511, 511)
 
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined

@@ -219,7 +219,7 @@
             {
                 clip(ps.uv.z);
                 int2 px = floor(ps.uv.xy * _ScreenParams.xy);
-                uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
+                uint4 col = 0;
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -238,52 +238,72 @@
                 // ID for each set of boards, 150 total
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
 
-                float4 turnWinUpdate = LoadValueFloat(_BufferTex, txTurnWinUpdate);
+                float4 turnWinUpdateLate = LoadValueFloat(_BufferTex, txTurnWinUpdateLate);
                 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0) {
-                    turnWinUpdate.xyz = float3(1.0, -1.0, 0.0);
+                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0.0, 0.0);
                 }
 
                 [branch]
-                // Parameters to save
-                if (px.y >= int(txCurBoardBL.y))
+                // Flatten min-max tree into 150 pixels
+                if (all(px >= txEvalArea.xy))
                 {
+                    col = asfloat(_BufferTex.Load(int3(px, 0)));
+                    int id = px.x - txEvalArea.x;
+                    const bool maximizingPlayer = true;
+
+                }
+                // Parameters to save
+                else if (px.y >= int(txCurBoardBL.y))
+                {
+                    col = asuint(_BufferTex.Load(int3(px, 0)));
                     uint4 curBoard[4];
                     curBoard[B_LEFT] =  LoadValueUint(_BufferTex, txCurBoardBL);
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
-                    if (floor(turnWinUpdate.x) == 1) {
-                        // curBoard[B_LEFT] = newBoard(B_LEFT);
-                        // curBoard[B_RIGHT] = newBoard(B_RIGHT);
-                        // curBoard[T_LEFT] = newBoard(T_LEFT);
-                        // curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        curBoard[B_LEFT] = kingTests[1][B_LEFT];
-                        curBoard[B_RIGHT] = kingTests[1][B_RIGHT];
-                        curBoard[T_LEFT] = kingTests[1][T_LEFT];
-                        curBoard[T_RIGHT] = kingTests[1][T_RIGHT];
+                    // New board
+                    if (floor(turnWinUpdateLate.x) == 1) {
+                        curBoard[B_LEFT] = newBoard(B_LEFT);
+                        curBoard[B_RIGHT] = newBoard(B_RIGHT);
+                        curBoard[T_LEFT] = newBoard(T_LEFT);
+                        curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
 
-                    turnWinUpdate.z = turnWinUpdate.z < 6.0 ?
-                        turnWinUpdate.z + 1.0 :
-                        turnWinUpdate.z;
+                    // Increment board generation counter
+                    turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 ?
+                        turnWinUpdateLate.z + 1.0 :
+                        turnWinUpdateLate.z;
+
+                    // Check if current board is in late game
+                    bool lateGame = turnWinUpdateLate.w > 0.0 ? true : false;
+                    // Both sides no queens
+                    uint2 buf;
+                    buf.x = curBoard[T_LEFT][0];
+                    buf.y = curBoard[T_RIGHT][0];
+                    buf = (buf >> 24) & 0xff;
+                    lateGame |= dot(float4(buf.x & 0xf, buf.x >> 4,
+                        buf.y & 0xf, buf.y >> 4), 1..xxxx) > 0.0 ? true : false;
+                    // One queen no pieces
+                    // Minor piece only
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
-                    StoreValueFloat(txTurnWinUpdate, turnWinUpdate, col, px);
+                    StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                 }
                 // Actual board
                 else if (all(px < int2(boardParams.zw)))
                 //if (all(px == _Pixel))
                 {
+                    col = asuint(_BufferTex.Load(int3(px, 0)));
                     // Stagger the move generation for slower GPUs
-                    if (turnWinUpdate.z < 6.0 &&
-                        px.y >= boardUpdate[int(turnWinUpdate.z)] &&
-                        px.y < boardUpdate[int(turnWinUpdate.z + 1.0)])
+                    if (turnWinUpdateLate.z < 6.0 &&
+                        px.y >= boardUpdate[int(turnWinUpdateLate.z)] &&
+                        px.y < boardUpdate[int(turnWinUpdateLate.z + 1.0)])
                     {
                         int2 parentPos = findParentBoard(boardSetID);
                         uint4 parentBoard[4];
@@ -300,13 +320,13 @@
                         int2 dest = 0;
 
                         // Anything after the first row of boards is the following turn
-                        turnWinUpdate.x += px.y > 1 ? 1.0 : 0.0;
+                        turnWinUpdateLate.x += px.y > 1 ? 1.0 : 0.0;
 
                 // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
                 //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
                         doMoveParams(parentBoard, floor(px.x * 0.5),
-                            uint(fmod(turnWinUpdate.x, 2)),
+                            uint(fmod(turnWinUpdateLate.x, 2)),
                             srcPieceID, src, dest);
 
                 // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
@@ -317,7 +337,7 @@
                         //buffer[0] = float4(src, dest);
                         col = (doMove(parentBoard, uint(singleUV_ID.z),
                             srcPieceID, src, dest));
-                        if (all(px == _Pixel * 2)) buffer[0] = float4(src, dest);
+                        //if (all(px == _Pixel * 2)) buffer[0] = float4(src, dest);
                     }
                 }
                 return col;
