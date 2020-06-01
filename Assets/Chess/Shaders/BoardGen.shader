@@ -296,18 +296,33 @@
 
                     // Check if current board is in late game
                     bool lateGame = turnWinUpdateLate.w > 0.0 ? true : false;
+                    
                     // Both sides no queens
                     buf.x = curBoard[T_LEFT][0];
                     buf.y = curBoard[T_RIGHT][0];
                     buf = buf & 0xff;
                     lateGame = lateGame || ((buf.x + buf.y) > 0 ? false : true);
+                    
                     // One queen no pieces
                     buf.x = curBoard[T_LEFT][0] & 0xffffff00;
                     buf.y = curBoard[T_LEFT][1] & 0x00ffffff;
                     buf.z = curBoard[T_RIGHT][0] & 0xffffff00;
                     buf.w = curBoard[T_RIGHT][1] & 0x00ffffff;
-
+                    lateGame = lateGame || ((buf.x + buf.y + buf.z + buf.w) > 0 ?
+                        false : true);
+                    
                     // Minor piece only
+                    int c = 0;
+                    [unroll]
+                    for (int i = 0; i < 24; i+= 8) {
+                        // There is a piece, position does not matter
+                        uint4 bt = ((buf >> i) & 0xff);
+                        c = bt.x > 0 ? c + 1 : c;
+                        c = bt.y > 0 ? c + 1 : c;
+                        c = bt.z > 0 ? c + 1 : c;
+                        c = bt.w > 0 ? c + 1 : c;
+                    }
+                    lateGame = lateGame || (c <= 1 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
