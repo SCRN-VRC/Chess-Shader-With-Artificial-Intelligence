@@ -219,7 +219,18 @@
             {
                 clip(ps.uv.z);
                 int2 px = floor(ps.uv.xy * _ScreenParams.xy);
-                uint4 col = 0;
+                uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
+
+                // 15 FPS
+                float4 timer = LoadValueFloat(_BufferTex, txTimer);
+                timer.x += unity_DeltaTime;
+
+                if (timer.x < 0.0667)
+                {
+                    StoreValueFloat(txTimer, timer, col, px);
+                    return col;
+                }
+                else timer.x = 0.0;
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -245,6 +256,7 @@
                 if (_Time.y < 1.0) {
                     turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0.0, 0.0);
                     kingMoved.xyzw = 0.0;
+                    timer.xyzw = 0.0;
                 }
 
                 [branch]
@@ -259,7 +271,6 @@
                 // Parameters to save
                 else if (px.y >= int(txCurBoardBL.y))
                 {
-                    col = asuint(_BufferTex.Load(int3(px, 0)));
                     uint4 curBoard[4];
                     curBoard[B_LEFT] =  LoadValueUint(_BufferTex, txCurBoardBL);
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
@@ -302,7 +313,7 @@
                     buf.y = curBoard[T_RIGHT][0];
                     buf = buf & 0xff;
                     lateGame = lateGame || ((buf.x + buf.y) > 0 ? false : true);
-                    
+
                     // One queen no pieces
                     buf.x = curBoard[T_LEFT][0] & 0xffffff00;
                     buf.y = curBoard[T_LEFT][1] & 0x00ffffff;
@@ -314,7 +325,7 @@
                     // Minor piece only
                     int c = 0;
                     [unroll]
-                    for (int i = 0; i < 24; i+= 8) {
+                    for (int i = 0; i <= 24; i += 8) {
                         // There is a piece, position does not matter
                         uint4 bt = ((buf >> i) & 0xff);
                         c = bt.x > 0 ? c + 1 : c;
@@ -324,19 +335,21 @@
                     }
                     lateGame = lateGame || (c <= 1 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
+                    
+                    buffer[0] = float4(turnWinUpdateLate.zw, kingMoved.xy);
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
                     StoreValueFloat(txKingMoved, kingMoved, col, px);
+                    StoreValueFloat(txTimer, timer, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                 }
                 // Actual board
                 else if (all(px < int2(boardParams.zw)))
                 //if (all(px == _Pixel))
                 {
-                    col = asuint(_BufferTex.Load(int3(px, 0)));
                     // Stagger the move generation for slower GPUs
                     if (turnWinUpdateLate.z < 6.0 &&
                         px.y >= boardUpdate[int(turnWinUpdateLate.z)] &&
@@ -369,12 +382,8 @@
                 // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
                 //     in int2 source, in int2 dest)
 
-                        //uint4 board[2] = { parentBoard[0], parentBoard[1] };
-                        //buffer[0] = float4(dest, validMove(board, src, dest).xx);
-                        //buffer[0] = float4(src, dest);
                         col = (doMove(parentBoard, uint(singleUV_ID.z),
                             srcPieceID, src, dest));
-                        //if (all(px == _Pixel * 2)) buffer[0] = float4(src, dest);
                     }
                 }
                 return col;

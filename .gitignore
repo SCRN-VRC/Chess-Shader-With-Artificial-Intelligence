@@ -90,3 +90,5 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+Assets/Editor/SaveRenderTextureToFile.cs.meta
+Assets/ShaderDebugging.cs.meta
