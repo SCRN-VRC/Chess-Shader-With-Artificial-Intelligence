@@ -27,10 +27,10 @@
             /*
                 Max moves per piece
                 Piece  Rq  Rk  Nq  Nk  Bq  Bk  Q   K  P
-                Moves  16  16  8   8   15  15  31  9  32  =  150 possible moves
+                Moves  16  16  8   8   15  15  31  8  32  =  149 possible moves
 
-                Every board generates 150 boards, one board is 2x2 pixels
-                300 x 2 pixels generated per board
+                Every board generates 149 boards, one board is 2x2 pixels
+                298 x 2 pixels generated per board
             */
 
             Texture2D<float4> _BufferTex;
@@ -103,7 +103,7 @@
                 {
                     idx_t -= moveNum[QUEEN].y;
                     srcPieceID = uint2(KING, 4);
-                    dest = kingList[idx_t % 8];
+                    dest = kingList[idx_t];
                 }
                 else
                 {
@@ -178,18 +178,13 @@
                     }
                     // Bishop like movement
                     else {
-                        // FIX THIS, unsigned range conversion
                         idx_t -= uint(moveNum[ROOK].x * 0.5);
                         int4 bOrigin = getBishopOrigin(src);
                         // Different moves on white/black tiles
                         bool onBlack = (src.x % 2 == src.y % 2);
-                        // [flatten]
-                        // if (idx_t < moveNum[BISHOP].x * 0.5)
-                        // {
-                            dest = idx_t < (onBlack ? 7 : 8) ?
-                                bOrigin.xy + int2(-1, 1) * idx_t :
-                                bOrigin.zw + int2(1, 1) * (idx_t - (onBlack ? 7 : 8));
-                        // }
+                        dest = idx_t < (onBlack ? 7 : 8) ?
+                            bOrigin.xy + int2(-1, 1) * idx_t :
+                            bOrigin.zw + int2(1, 1) * (idx_t - (onBlack ? 7 : 8));
                     }
                 }
                 // King
@@ -265,10 +260,10 @@
                         // curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         // curBoard[T_LEFT] = newBoard(T_LEFT);
                         // curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        curBoard[B_LEFT] = rookTests[1][B_LEFT];
-                        curBoard[B_RIGHT] = rookTests[1][B_RIGHT];
-                        curBoard[T_LEFT] = rookTests[1][T_LEFT];
-                        curBoard[T_RIGHT] = rookTests[1][T_RIGHT];
+                        curBoard[B_LEFT] = kingTests[1][B_LEFT];
+                        curBoard[B_RIGHT] = kingTests[1][B_RIGHT];
+                        curBoard[T_LEFT] = kingTests[1][T_LEFT];
+                        curBoard[T_RIGHT] = kingTests[1][T_RIGHT];
                     }
 
                     turnWinUpdate.z = turnWinUpdate.z < 6.0 ?

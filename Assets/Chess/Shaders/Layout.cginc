@@ -9,7 +9,7 @@
 
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined
-#define boardParams        float4(300, 2, 300, 302)
+#define boardParams        float4(298, 2, 298, 300)
 
 // Number of rows we update each frame
 static const int boardDiv = floor(boardParams.x / 5.0);
@@ -36,7 +36,7 @@ static const uint2 moveNum[7] =
     30,         78,     // Bishops
     32,         110,    // Rooks
     31,         141,    // Queen
-    9,          150     // King
+    8,          149     // King
 };
 
 inline uint4 LoadValueUint( in Texture2D<float4> tex, in int2 re )
