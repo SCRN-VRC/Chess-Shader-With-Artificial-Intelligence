@@ -267,14 +267,14 @@ Shader "ChessBot/BoardGen"
                     if (turnWinUpdateLate.z == 6.0 && col.w < 1.0)
                     {
                         uint4 board[2];
-                        int id = px.x - txEvalArea.x;
-                        [unroll]
+                        int id = px.x - txEvalArea.x + 1;
+                        [loop]
                         for (int i = 0; i < floor(boardParams.x * 0.5); i++)
                         {
                             // Only the top pixels
                             board[0] = asuint(_BufferTex.Load(int3(i * 2, id * 2 + 1, 0)));
                             board[1] = asuint(_BufferTex.Load(int3(i * 2 + 1, id * 2 + 1, 0)));
-                            //float score = eval(board, turnWinUpdateLate.w);
+                            float score = eval(board, turnWinUpdateLate.w);
                         }
                         // Mark as done
                         col.w = 1.0;
@@ -288,6 +288,12 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
+
+                    uint4 top[2];
+                    top[0] = curBoard[T_LEFT];
+                    top[1] = curBoard[T_RIGHT];
+                    float score = eval(top, turnWinUpdateLate.w);
+                    buffer[0] = score.xxxx;
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)

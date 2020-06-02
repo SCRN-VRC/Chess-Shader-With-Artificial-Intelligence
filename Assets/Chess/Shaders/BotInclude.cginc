@@ -180,8 +180,10 @@ static const float pcTbl[8][8][8] =
 };
 
 // Change origin to bottom left
-float getBoardScore(int3 src) {
-    return pcTbl[src.z][7 - src.y][src.x];
+// Flip board if it's black
+float getBoardScore(int2 src, int z, int w) {
+    src = max(src, 0);
+    return pcTbl[z][w == WHITE ? 7 - src.y : src.y][src.x];
 }
 
 // List of moves
@@ -270,62 +272,97 @@ uint4 newBoard (uint posID)
     return 0u;
 }
 
-// // Board eval function
-// // Also from https://www.chessprogramming.org/Simplified_Evaluation_Function
-// float eval (uint4 boardArray[2], float lateGame)
-// {
-
-//     float boardScore = 0.;
-//     float pieceScore = 0.;
-
-//     [unroll]
-//     for (int i = 0; i < 4; i++) {
-//         [unroll]
-//         for (int j = 0; j < 8; j++) {
-//             uint2 pieces;
-//             pieces.x = boardArray[0][i] & pMask;
-//             pieces.y = boardArray[1][i] & pMask;
-
-//             // black pieces are negative
-//             float2 bw;
-//             bw.x = (pieces.x & sMask) >> 3 > 0. ? 1. : -1.;
-//             bw.y = (pieces.y & sMask) >> 3 > 0. ? 1. : -1.;
-
-//             // individual piece values
-//             pieceScore += bw.x * pieceVal[pieces.x & kMask];
-//             pieceScore += bw.y * pieceVal[pieces.y & kMask];
-
-//             // late game king changes table
-//             // Additionally we should define where the ending begins.
-//             // For [chessprogramming.org] it might be either if:
-
-//             // Both sides have no queens or
-//             // Every side which has a queen has additionally no
-//             // other pieces or one minor piece maximum.
-
-//             uint2 kingTbl;
-//             kingTbl.x = (lateGame > 0.0) && (pieces.x & kMask) == KING ? 1 : 0;
-//             kingTbl.y = (lateGame > 0.0) && (pieces.y & kMask) == KING ? 1 : 0;
-
-//             // piece-square table, black is flipped
-//             boardScore += bw.x * pcTbl[(pieces.x & kMask) + kingTbl.x]
-//                 [bw.x > 0 ? i + 4 : 3 - i][j];
-//             boardScore += bw.y * pcTbl[(pieces.y & kMask) + kingTbl.y]
-//                 [bw.y > 0 ? i : 7 - i][j];
-
-//             boardArray[0][i] = boardArray[0][i] << 4;
-//             boardArray[1][i] = boardArray[1][i] << 4;
-//         }
-//     }
-
-//     return pieceScore + boardScore;
-// }
-
 // Board eval function
 // From https://www.chessprogramming.org/Simplified_Evaluation_Function
 float eval (uint4 boardTop[2], float lateGame)
 {
+    // x for white pieces, y for black pieces
+    float2 boardScore = 0.;
+    float2 pieceScore = 0.;
+    uint buf;
+    int2 pos;
+    int i = 0;
 
+    // Pawns
+    [unroll]
+    for (; i <= 24; i += 8) {
+        // White
+        buf = (boardTop[0][2] >> i) & 0xff;
+        pos = int2(buf & 0xf, buf >> 4);
+        boardScore.x += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? PAWN : 0, WHITE);
+        pieceScore.x += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+        buf = (boardTop[0][3] >> i) & 0xff;
+        pos = int2(buf & 0xf, buf >> 4);
+        boardScore.x += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? PAWN : 0, WHITE);
+        pieceScore.x += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+        // Black
+        buf = (boardTop[1][2] >> i) & 0xff;
+        pos = int2(buf & 0xf, buf >> 4);
+        boardScore.y += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? PAWN : 0, BLACK);
+        pieceScore.y += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+        buf = (boardTop[1][3] >> i) & 0xff;
+        pos = int2(buf & 0xf, buf >> 4);
+        boardScore.y += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? PAWN : 0, BLACK);
+        pieceScore.y += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+    }
+
+    // Queen side
+    [unroll]
+    for (i = 0; i < 2; i++) {
+        buf = boardTop[i][0];
+        // Queen
+        pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? QUEEN : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[QUEEN] : 0.0;
+        // Bishop
+        pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? BISHOP : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[BISHOP] : 0.0;
+        // Knight
+        pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+        // Rooks
+        pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? ROOK : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[ROOK] : 0.0;
+    }
+
+    // King side
+    [unroll]
+    for (i = 0; i < 2; i++) {
+        buf = boardTop[i][1];
+        // Rook
+        pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? ROOK : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[ROOK] : 0.0;
+        // Knight
+        pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+        // Bishop
+        pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+        // King, 2 scoring tables
+        pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
+        boardScore[i] += getBoardScore(pos - 1,
+            pos.x + pos.y > 0 ? (lateGame > 0.0 ? KING + 1 : KING) : 0,
+            i == 0 ? WHITE : BLACK);
+        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KING] : 0.0;
+    }
+    return (boardScore.x - boardScore.y) + (pieceScore.x - pieceScore.y);
 }
 
 uint getPiece (uint4 boardArray[2], int2 source)
