@@ -267,7 +267,7 @@ uint4 newBoard (uint posID)
 
 // Board eval function
 // Also from https://www.chessprogramming.org/Simplified_Evaluation_Function
-float eval (uint4 boardArray[2], bool lateGame)
+float eval (uint4 boardArray[2], float lateGame)
 {
 
     float boardScore = 0.;
@@ -300,8 +300,8 @@ float eval (uint4 boardArray[2], bool lateGame)
                 other pieces or one minor piece maximum.
             */
             uint2 kingTbl;
-            kingTbl.x = lateGame && (pieces.x & kMask) == KING ? 1 : 0;
-            kingTbl.y = lateGame && (pieces.y & kMask) == KING ? 1 : 0;
+            kingTbl.x = (lateGame > 0.0) && (pieces.x & kMask) == KING ? 1 : 0;
+            kingTbl.y = (lateGame > 0.0) && (pieces.y & kMask) == KING ? 1 : 0;
 
             // piece-square table, black is flipped
             boardScore += bw.x * pcTbl[(pieces.x & kMask) + kingTbl.x]

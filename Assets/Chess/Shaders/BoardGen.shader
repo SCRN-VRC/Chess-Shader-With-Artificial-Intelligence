@@ -236,15 +236,10 @@
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
 
                 // UVs of a single board (2x2)
-                float4 singleUV_ID = 0;
+                float3 singleUV_ID = 0.0;
                 singleUV_ID.xy = fmod(px, 2..xx);
                 // ID of each corner
                 singleUV_ID.z = singleUV_ID.y * 2 + singleUV_ID.x;
-
-                // // ID for each board, 22500 total
-                // singleUV_ID.xy = fmod(floor(ps.uv.xy * _ScreenParams.xy * 0.5),
-                //     boardParams.zw * 0.5);
-                // singleUV_ID.w = singleUV_ID.y * (boardParams.w * 0.5) + singleUV_ID.x;
 
                 // ID for each set of boards, 150 total
                 uint boardSetID = floor(ps.uv.y * _ScreenParams.y * 0.5);
@@ -264,9 +259,26 @@
                 if (all(px >= txEvalArea.xy))
                 {
                     col = asfloat(_BufferTex.Load(int3(px, 0)));
-                    int id = px.x - txEvalArea.x;
-                    const bool maximizingPlayer = true;
+                    // Reset
+                    col = turnWinUpdateLate.z < 1.0 ? 0.0 : col;
 
+                    // Only update after all boards are generated
+                    [branch]
+                    if (turnWinUpdateLate.z == 6.0 && col.w < 1.0)
+                    {
+                        uint4 board[2];
+                        int id = px.x - txEvalArea.x;
+                        [unroll]
+                        for (int i = 0; i < floor(boardParams.x * 0.5); i++)
+                        {
+                            // Only the top pixels
+                            board[0] = asuint(_BufferTex.Load(int3(i * 2, id * 2 + 1, 0)));
+                            board[1] = asuint(_BufferTex.Load(int3(i * 2 + 1, id * 2 + 1, 0)));
+                            //float score = eval(board, turnWinUpdateLate.w);
+                        }
+                        // Mark as done
+                        col.w = 1.0;
+                    }
                 }
                 // Parameters to save
                 else if (px.y >= int(txCurBoardBL.y))
@@ -278,7 +290,8 @@
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
                     // New board
-                    if (floor(turnWinUpdateLate.x) == 1) {
+                    if (floor(turnWinUpdateLate.x) == 1)
+                    {
                         curBoard[B_LEFT] = newBoard(B_LEFT);
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
