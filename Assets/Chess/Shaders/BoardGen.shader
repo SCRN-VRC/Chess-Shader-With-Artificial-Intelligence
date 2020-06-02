@@ -1,4 +1,4 @@
-﻿Shader "ChessBot/BoardGen"
+Shader "ChessBot/BoardGen"
 {
     Properties
     {
@@ -348,8 +348,6 @@
                     }
                     lateGame = lateGame || (c <= 1 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
-                    
-                    buffer[0] = float4(turnWinUpdateLate.zw, kingMoved.xy);
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);

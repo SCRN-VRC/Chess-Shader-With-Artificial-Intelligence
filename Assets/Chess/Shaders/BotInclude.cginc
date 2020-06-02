@@ -179,6 +179,11 @@ static const float pcTbl[8][8][8] =
     -50,-30,-30,-30,-30,-30,-30,-50
 };
 
+// Change origin to bottom left
+float getBoardScore(int3 src) {
+    return pcTbl[src.z][7 - src.y][src.x];
+}
+
 // List of moves
 static const int2 pawnListW[4] = { -1, 1, 1, 1, 0, 1, 0, 2 };
 static const int2 pawnListB[4] = { -1, -1, 1, -1, 0, -1, 0, -2 };
@@ -265,56 +270,62 @@ uint4 newBoard (uint posID)
     return 0u;
 }
 
+// // Board eval function
+// // Also from https://www.chessprogramming.org/Simplified_Evaluation_Function
+// float eval (uint4 boardArray[2], float lateGame)
+// {
+
+//     float boardScore = 0.;
+//     float pieceScore = 0.;
+
+//     [unroll]
+//     for (int i = 0; i < 4; i++) {
+//         [unroll]
+//         for (int j = 0; j < 8; j++) {
+//             uint2 pieces;
+//             pieces.x = boardArray[0][i] & pMask;
+//             pieces.y = boardArray[1][i] & pMask;
+
+//             // black pieces are negative
+//             float2 bw;
+//             bw.x = (pieces.x & sMask) >> 3 > 0. ? 1. : -1.;
+//             bw.y = (pieces.y & sMask) >> 3 > 0. ? 1. : -1.;
+
+//             // individual piece values
+//             pieceScore += bw.x * pieceVal[pieces.x & kMask];
+//             pieceScore += bw.y * pieceVal[pieces.y & kMask];
+
+//             // late game king changes table
+//             // Additionally we should define where the ending begins.
+//             // For [chessprogramming.org] it might be either if:
+
+//             // Both sides have no queens or
+//             // Every side which has a queen has additionally no
+//             // other pieces or one minor piece maximum.
+
+//             uint2 kingTbl;
+//             kingTbl.x = (lateGame > 0.0) && (pieces.x & kMask) == KING ? 1 : 0;
+//             kingTbl.y = (lateGame > 0.0) && (pieces.y & kMask) == KING ? 1 : 0;
+
+//             // piece-square table, black is flipped
+//             boardScore += bw.x * pcTbl[(pieces.x & kMask) + kingTbl.x]
+//                 [bw.x > 0 ? i + 4 : 3 - i][j];
+//             boardScore += bw.y * pcTbl[(pieces.y & kMask) + kingTbl.y]
+//                 [bw.y > 0 ? i : 7 - i][j];
+
+//             boardArray[0][i] = boardArray[0][i] << 4;
+//             boardArray[1][i] = boardArray[1][i] << 4;
+//         }
+//     }
+
+//     return pieceScore + boardScore;
+// }
+
 // Board eval function
-// Also from https://www.chessprogramming.org/Simplified_Evaluation_Function
-float eval (uint4 boardArray[2], float lateGame)
+// From https://www.chessprogramming.org/Simplified_Evaluation_Function
+float eval (uint4 boardTop[2], float lateGame)
 {
 
-    float boardScore = 0.;
-    float pieceScore = 0.;
-
-    [unroll]
-    for (int i = 0; i < 4; i++) {
-        [unroll]
-        for (int j = 0; j < 8; j++) {
-            uint2 pieces;
-            pieces.x = boardArray[0][i] & pMask;
-            pieces.y = boardArray[1][i] & pMask;
-
-            // black pieces are negative
-            float2 bw;
-            bw.x = (pieces.x & sMask) >> 3 > 0. ? 1. : -1.;
-            bw.y = (pieces.y & sMask) >> 3 > 0. ? 1. : -1.;
-
-            // individual piece values
-            pieceScore += bw.x * pieceVal[pieces.x & kMask];
-            pieceScore += bw.y * pieceVal[pieces.y & kMask];
-
-            // late game king changes table
-            /*
-                Additionally we should define where the ending begins.
-                For [chessprogramming.org] it might be either if:
-
-                Both sides have no queens or
-                Every side which has a queen has additionally no
-                other pieces or one minor piece maximum.
-            */
-            uint2 kingTbl;
-            kingTbl.x = (lateGame > 0.0) && (pieces.x & kMask) == KING ? 1 : 0;
-            kingTbl.y = (lateGame > 0.0) && (pieces.y & kMask) == KING ? 1 : 0;
-
-            // piece-square table, black is flipped
-            boardScore += bw.x * pcTbl[(pieces.x & kMask) + kingTbl.x]
-                [bw.x > 0 ? i + 4 : 3 - i][j];
-            boardScore += bw.y * pcTbl[(pieces.y & kMask) + kingTbl.y]
-                [bw.y > 0 ? i : 7 - i][j];
-
-            boardArray[0][i] = boardArray[0][i] << 4;
-            boardArray[1][i] = boardArray[1][i] << 4;
-        }
-    }
-
-    return pieceScore + boardScore;
 }
 
 uint getPiece (uint4 boardArray[2], int2 source)
