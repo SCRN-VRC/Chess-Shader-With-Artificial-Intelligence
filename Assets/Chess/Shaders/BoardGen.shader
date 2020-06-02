@@ -289,11 +289,11 @@ Shader "ChessBot/BoardGen"
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
-                    uint4 top[2];
-                    top[0] = curBoard[T_LEFT];
-                    top[1] = curBoard[T_RIGHT];
-                    float score = eval(top, turnWinUpdateLate.w);
-                    buffer[0] = score.xxxx;
+                    // uint4 top[2];
+                    // top[0] = curBoard[T_LEFT];
+                    // top[1] = curBoard[T_RIGHT];
+                    // float score = eval(top, turnWinUpdateLate.w);
+                    // buffer[0] = score.xxxx;
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -323,6 +323,12 @@ Shader "ChessBot/BoardGen"
                         uint2(8, 5) ? false : true);
                     kingMoved.x = moved.x ? 1.0 : 0.0;
                     kingMoved.y = moved.y ? 1.0 : 0.0;
+
+                    // Check if king is dead
+                    turnWinUpdateLate.y = turnWinUpdateLate.y < 0.0 ?
+                        buf.x == 0 ? BLACK :
+                            buf.y == 0 ? WHITE : turnWinUpdateLate.y :
+                        turnWinUpdateLate.y;
 
                     // Check if current board is in late game
                     bool lateGame = turnWinUpdateLate.w > 0.0 ? true : false;
