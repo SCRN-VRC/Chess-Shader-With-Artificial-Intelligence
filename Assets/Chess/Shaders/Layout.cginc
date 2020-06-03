@@ -64,4 +64,15 @@ inline void StoreValueFloat( in int2 txPos, in float4 value, inout uint4 col,
     col = all(fragPos == txPos) ? asuint(value) : col;
 }
 
+// Hash without sine
+// https://www.shadertoy.com/view/4djSRW
+
+float hash11(float p)
+{
+    p = frac(p * .1031);
+    p *= p + 33.33;
+    p *= p + p;
+    return frac(p);
+}
+
 #endif

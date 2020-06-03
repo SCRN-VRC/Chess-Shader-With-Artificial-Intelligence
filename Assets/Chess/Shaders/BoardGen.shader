@@ -258,15 +258,19 @@ Shader "ChessBot/BoardGen"
                 // Flatten min-max tree into 150 pixels
                 if (all(px >= txEvalArea.xy))
                 {
-                    col = asfloat(_BufferTex.Load(int3(px, 0)));
+                    float4 evalPrev = asfloat(_BufferTex.Load(int3(px, 0)));
                     // Reset
-                    col = turnWinUpdateLate.z < 1.0 ? 0.0 : col;
+                    evalPrev = turnWinUpdateLate.z < 6.0 ?
+                        float4(-1000000000, 0..xxx) : evalPrev;
 
                     // Only update after all boards are generated
                     [branch]
-                    if (turnWinUpdateLate.z == 6.0 && col.w < 1.0)
+                    if (turnWinUpdateLate.z == 6.0 && evalPrev.w < 1.0)
                     {
+                        const int MAX_KEEP = 10;
                         uint4 board[2];
+                        int2 bestBoards[MAX_KEEP]; // Keep 10 of the best
+                        int2 c = 0;
                         int id = px.x - txEvalArea.x + 1;
                         [loop]
                         for (int i = 0; i < floor(boardParams.x * 0.5); i++)
@@ -275,10 +279,22 @@ Shader "ChessBot/BoardGen"
                             board[0] = asuint(_BufferTex.Load(int3(i * 2, id * 2 + 1, 0)));
                             board[1] = asuint(_BufferTex.Load(int3(i * 2 + 1, id * 2 + 1, 0)));
                             float score = eval(board, turnWinUpdateLate.w);
+                            [flatten]
+                            if (score >= evalPrev.x) {
+                                c.xy = score > evalPrev.x ? 0 : c.xy;
+                                bestBoards[c.x] = int2(i * 2, id * 2);
+                                evalPrev.x = score;
+                                c.x = (c.x + 1) % MAX_KEEP;
+                                c.y += 1;
+                            }
                         }
+                        // Pick a "random" board if scores are equal
+                        int ind = floor(hash11(c.x + c.y) * min(c.y, 10));
+                        evalPrev.yz = bestBoards[ind].xy;
                         // Mark as done
-                        col.w = 1.0;
+                        evalPrev.w = 1.0;
                     }
+                    col = asuint(evalPrev);
                 }
                 // Parameters to save
                 else if (px.y >= int(txCurBoardBL.y))
@@ -289,12 +305,6 @@ Shader "ChessBot/BoardGen"
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
-                    // uint4 top[2];
-                    // top[0] = curBoard[T_LEFT];
-                    // top[1] = curBoard[T_RIGHT];
-                    // float score = eval(top, turnWinUpdateLate.w);
-                    // buffer[0] = score.xxxx;
-
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
                     {
@@ -303,6 +313,14 @@ Shader "ChessBot/BoardGen"
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
+
+                    // float4 o = 2;
+                    // for (int i = 362; i <= 511; i++) {
+                    //     float4 a = asfloat(_BufferTex.Load(int3(i, 511, 0)));
+                    //     if (a.w > 0.0 && a.x > FLT_MIN) {o.x = i; o.y = a.x; break;}
+                    // }
+
+                    // buffer[0] = o;
 
                     // Increment board generation counter
                     turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 ?
@@ -360,6 +378,26 @@ Shader "ChessBot/BoardGen"
                     }
                     lateGame = lateGame || (c <= 1 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
+
+                    float checkEval = asfloat(_BufferTex.Load(int3(txEvalArea.xy, 0)).w);
+                    // Game not over, correct update phase
+                    [branch]
+                    if (checkEval > 0.0 && turnWinUpdateLate.z == 6.0 &&
+                        turnWinUpdateLate.y < 0.0)
+                    {
+                        // Pick best move for computer (black)
+                        int2 bestMove = -1;
+                        float bestScore = FLT_MAX;
+                        [unroll]
+                        for (int i = txEvalArea.x; i <= txEvalArea.z; i++) {
+                            float4 eOut = asfloat(_BufferTex.Load(int3(i, txEvalArea.y, 0)));
+                            bestMove = eOut.x < bestScore && eOut.x > FLT_MIN ?
+                                eOut.yz : bestMove;
+                            bestScore = eOut.x < bestScore && eOut.x > FLT_MIN ?
+                                eOut.x : bestScore;
+                        }
+                        buffer[0] = float4(bestScore, bestMove, 0);
+                    }
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);

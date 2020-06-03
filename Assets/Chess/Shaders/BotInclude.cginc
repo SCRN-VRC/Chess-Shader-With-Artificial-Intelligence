@@ -16,6 +16,9 @@
 #define T_LEFT      2
 #define T_RIGHT     3
 
+#define FLT_MIN     -1000000000.0
+#define FLT_MAX     1000000000.0
+
 // Pieces mask
 static const uint pMask = 0xf;
 
@@ -276,6 +279,9 @@ uint4 newBoard (uint posID)
 // From https://www.chessprogramming.org/Simplified_Evaluation_Function
 float eval (uint4 boardTop[2], float lateGame)
 {
+    // Empty board
+    if (all(boardTop[0] == 0) && all(boardTop[1] == 0))
+        return FLT_MIN;
     // x for white pieces, y for black pieces
     float2 boardScore = 0.;
     float2 pieceScore = 0.;
