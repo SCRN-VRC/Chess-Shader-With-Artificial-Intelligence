@@ -8,7 +8,12 @@
 #define txTurnWinUpdateLate             int2(2, 511)
 #define txKingMoved                     int2(3, 511)
 #define txTimer                         int2(4, 511)
+#define txPlayerSrcDest                 int2(5, 511)
+#define txPlayerPosState                int2(6, 511)
 #define txEvalArea                      int4(362, 511, 511, 511)
+
+#define PSTATE_SRC         0
+#define PSTATE_DEST        1
 
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined

@@ -6,8 +6,8 @@
         _Color2 ("Color 2", Color) = (0,0,0,1)
         _Color3 ("Color 3", Color) = (1,1,1,1)
         _Color4 ("Color 4", Color) = (0,0,0,1)
-        _AtlasTex ("Chess Pieces", 2D) = "white" {}
-        _BufferTex ("Buffer", 2D) = "black" {}
+        _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
+        _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _Pixel ("Pixel Check", Vector) = (0, 0, 0, 0)
     }
     SubShader
@@ -79,9 +79,9 @@
 
                 //buffer[0] = float4((boardBottom[2] & 0xffff0000));
 
-                int2 src = int2(0, 1);
-                int2 dest = int2(0, 2);
-                uint2 pid = uint2(9, 8);
+                // int2 src = int2(0, 1);
+                // int2 dest = int2(0, 2);
+                // uint2 pid = uint2(9, 8);
 
                 // uint4 moved[4] = {
                 //     doMove(boardBottom, 0, pid, src, dest),
@@ -117,8 +117,13 @@
                 float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
                 pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
+                float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
+                col = lerp(col, float3(1., 0., 0.), playerPosState.x > 0 && all(uint2(playerPosState.xy) == uv_id));
+                
+                float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
+                col = lerp(col, float3(0., 0., 1.), playerSrcDest.x > 0 && all(uint2(playerSrcDest.xy) == uv_id));
+                
                 // bool clear = validMove(board, src, uv_id);
-
                 // col = lerp(col, float3(0., 1., 0.), clear);
 
                 col = lerp(col.rgb, pc.rgb, pc.a);

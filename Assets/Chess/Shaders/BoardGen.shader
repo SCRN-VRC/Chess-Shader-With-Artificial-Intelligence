@@ -2,9 +2,9 @@ Shader "ChessBot/BoardGen"
 {
     Properties
     {
-        _BufferTex ("Buffer", 2D) = "black" {}
+        _BufferTex ("ChessBot Buffer", 2D) = "black" {}
+        _TouchTex ("Touch Sensor Texture", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.1
-        _Pixel ("Pixel Check", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -34,8 +34,9 @@ Shader "ChessBot/BoardGen"
             */
 
             Texture2D<float4> _BufferTex;
+            Texture2D<float4> _TouchTex;
+            float4 _TouchTex_TexelSize;
             float _MaxDist;
-            int2 _Pixel;
 
             struct appdata
             {
@@ -246,12 +247,16 @@ Shader "ChessBot/BoardGen"
 
                 float4 turnWinUpdateLate = LoadValueFloat(_BufferTex, txTurnWinUpdateLate);
                 float4 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
+                float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
+                float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0) {
-                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0.0, 0.0);
+                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0..xx);
                     kingMoved.xyzw = 0.0;
                     timer.xyzw = 0.0;
+                    playerSrcDest = -1.0;
+                    playerPosState.xyzw = float4(-1..xx, 0..xx);
                 }
 
                 [branch]
@@ -261,7 +266,7 @@ Shader "ChessBot/BoardGen"
                     float4 evalPrev = asfloat(_BufferTex.Load(int3(px, 0)));
                     // Reset
                     evalPrev = turnWinUpdateLate.z < 6.0 ?
-                        float4(-1000000000, 0..xxx) : evalPrev;
+                        float4(FLT_MIN, 0..xxx) : evalPrev;
 
                     // Only update after all boards are generated
                     [branch]
@@ -269,8 +274,8 @@ Shader "ChessBot/BoardGen"
                     {
                         const int MAX_KEEP = 10;
                         uint4 board[2];
+                        uint2 c = 0;
                         int2 bestBoards[MAX_KEEP]; // Keep 10 of the best
-                        int2 c = 0;
                         int id = px.x - txEvalArea.x + 1;
                         [loop]
                         for (int i = 0; i < floor(boardParams.x * 0.5); i++)
@@ -289,7 +294,7 @@ Shader "ChessBot/BoardGen"
                             }
                         }
                         // Pick a "random" board if scores are equal
-                        int ind = floor(hash11(c.x + c.y) * min(c.y, 10));
+                        uint ind = floor(hash11(c.x + c.y) * min(c.y, 10));
                         evalPrev.yz = bestBoards[ind].xy;
                         // Mark as done
                         evalPrev.w = 1.0;
@@ -314,18 +319,12 @@ Shader "ChessBot/BoardGen"
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
 
-                    // float4 o = 2;
-                    // for (int i = 362; i <= 511; i++) {
-                    //     float4 a = asfloat(_BufferTex.Load(int3(i, 511, 0)));
-                    //     if (a.w > 0.0 && a.x > FLT_MIN) {o.x = i; o.y = a.x; break;}
-                    // }
-
-                    // buffer[0] = o;
-
                     // Increment board generation counter
-                    turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 ?
-                        turnWinUpdateLate.z + 1.0 :
-                        turnWinUpdateLate.z;
+                    // only on computers turn
+                    turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 &&
+                        fmod(turnWinUpdateLate.x, 2.0) == BLACK ?
+                            turnWinUpdateLate.z + 1.0 :
+                            turnWinUpdateLate.z;
                     
                     uint4 buf;
                     // Check if king moved, for castling
@@ -379,6 +378,7 @@ Shader "ChessBot/BoardGen"
                     lateGame = lateGame || (c <= 1 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
 
+                    // Computer's turn
                     float checkEval = asfloat(_BufferTex.Load(int3(txEvalArea.xy, 0)).w);
                     // Game not over, correct update phase
                     [branch]
@@ -396,7 +396,64 @@ Shader "ChessBot/BoardGen"
                             bestScore = eOut.x < bestScore && eOut.x > FLT_MIN ?
                                 eOut.x : bestScore;
                         }
-                        buffer[0] = float4(bestScore, bestMove, 0);
+
+                        // Replace the current board
+                        if (bestMove.x > -1) {
+                            curBoard[B_LEFT] = LoadValueUint(_BufferTex, bestMove);
+                            curBoard[B_RIGHT] = LoadValueUint(_BufferTex, bestMove + int2(1, 0));
+                            curBoard[T_LEFT] = LoadValueUint(_BufferTex, bestMove + int2(0, 1));
+                            curBoard[T_RIGHT] = LoadValueUint(_BufferTex, bestMove + int2(1, 1));
+                        }
+
+                        // Player's turn
+                        turnWinUpdateLate.x += 1.0;
+                        turnWinUpdateLate.z = 0.0;
+                    }
+
+                    // Player's turn
+                    [branch]
+                    if (turnWinUpdateLate.y < 0.0 &&
+                        fmod(turnWinUpdateLate.x, 2.0) == WHITE)
+                    {
+                        // Average position
+                        float3 touchPosCount = 0.0;
+                        [unroll]
+                        for (int i = 0; i < 8; i++) {
+                            [unroll]
+                            for (int j = 0; j < 8; j++) {
+                                float d = _TouchTex.Load(int3(i, j, 0)).r;
+                                touchPosCount.xy += d > 0.0 ? float2(i, j) : 0..xx;
+                                touchPosCount.z += d > 0.0 ? 1.0 : 0.0;
+                            }
+                        }
+                        touchPosCount.xy = floor(touchPosCount.xy /
+                            max(touchPosCount.z, 1.));
+
+                        // x is flipped
+                        touchPosCount.x = 7.0 - touchPosCount.x;
+                        playerPosState.xy = touchPosCount.z > 0.0 ?
+                            touchPosCount.xy : playerPosState.xy;
+                        playerPosState.z = touchPosCount.z;
+
+                        // Figure out player inputs
+                        if (playerPosState.w = PSTATE_SRC)
+                        {
+                            int2 srcPos = playerPosState.z > 0.0 ?
+                                playerPosState.xy : playerSrcDest.xy;
+                            uint4 board[2] = { curBoard[B_LEFT], curBoard[B_RIGHT] };
+                            uint pc = srcPos.x > -1 ? getPiece(board, srcPos) : 0;
+                            // If something there with the player color
+                            [flatten]
+                            if (pc.x & kMask != 0 && pc.x >> 3 == WHITE)
+                            {
+                                playerSrcDest.xy = srcPos;
+                                //playerPosState.w = PSTATE_DEST;
+                            }
+                        }
+                        else
+                        {
+
+                        }
                     }
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
@@ -405,11 +462,12 @@ Shader "ChessBot/BoardGen"
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
                     StoreValueFloat(txKingMoved, kingMoved, col, px);
                     StoreValueFloat(txTimer, timer, col, px);
+                    StoreValueFloat(txPlayerSrcDest, playerSrcDest, col, px);
+                    StoreValueFloat(txPlayerPosState, playerPosState, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                 }
                 // Actual board
                 else if (all(px < int2(boardParams.zw)))
-                //if (all(px == _Pixel))
                 {
                     // Stagger the move generation for slower GPUs
                     if (turnWinUpdateLate.z < 6.0 &&
