@@ -226,7 +226,7 @@ Shader "ChessBot/BoardGen"
                 float4 timer = LoadValueFloat(_BufferTex, txTimer);
                 timer.x += unity_DeltaTime;
 
-                if (timer.x < 0.0667)
+                if (timer.x < 0.05)
                 {
                     StoreValueFloat(txTimer, timer, col, px);
                     return col;
@@ -431,12 +431,13 @@ Shader "ChessBot/BoardGen"
 
                         // x is flipped
                         touchPosCount.x = 7.0 - touchPosCount.x;
+
                         playerPosState.xy = touchPosCount.z > 0.0 ?
                             touchPosCount.xy : playerPosState.xy;
                         playerPosState.z = touchPosCount.z;
 
                         // Figure out player inputs
-                        if (playerPosState.w = PSTATE_SRC)
+                        if (playerPosState.w == PSTATE_SRC)
                         {
                             int2 srcPos = playerPosState.z > 0.0 ?
                                 playerPosState.xy : playerSrcDest.xy;
@@ -444,15 +445,37 @@ Shader "ChessBot/BoardGen"
                             uint pc = srcPos.x > -1 ? getPiece(board, srcPos) : 0;
                             // If something there with the player color
                             [flatten]
-                            if (pc.x & kMask != 0 && pc.x >> 3 == WHITE)
+                            if ((pc.x & kMask) != 0 && (pc.x >> 3) == WHITE)
                             {
                                 playerSrcDest.xy = srcPos;
-                                //playerPosState.w = PSTATE_DEST;
+                                playerPosState.w = PSTATE_LIFT;
                             }
                         }
+                        // Wait for nothing touching
+                        else if (playerPosState.w == PSTATE_LIFT)
+                        {
+                            playerPosState.w = playerPosState.z > 0.0 ?
+                                PSTATE_LIFT : PSTATE_DEST;
+                        }
+                        // Accept next input
                         else
                         {
+                            int2 destPos = playerPosState.z > 0.0 ?
+                                playerPosState.xy : playerSrcDest.zw;
+                            uint4 board[2] = { curBoard[B_LEFT], curBoard[B_RIGHT] };
+                            // Make player move
+                            [branch]
+                            if (destPos.x > -1 &&
+                                validMove(board, playerSrcDest.xy, destPos))
+                            {
 
+                            }
+                            else
+                            {
+                                playerPosState.w = destPos.x < 0 ?
+                                    PSTATE_DEST : PSTATE_SRC;
+                                playerSrcDest = destPos.x < 0 ? playerSrcDest : -1;
+                            }
                         }
                     }
 

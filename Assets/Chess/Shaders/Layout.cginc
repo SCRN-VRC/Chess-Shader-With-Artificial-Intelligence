@@ -12,8 +12,10 @@
 #define txPlayerPosState                int2(6, 511)
 #define txEvalArea                      int4(362, 511, 511, 511)
 
+// States for extracting touch input
 #define PSTATE_SRC         0
-#define PSTATE_DEST        1
+#define PSTATE_LIFT        1    // Wait for no touch
+#define PSTATE_DEST        2    // Then accept next input
 
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined

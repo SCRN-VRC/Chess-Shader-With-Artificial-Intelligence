@@ -118,13 +118,13 @@
                 pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
-                col = lerp(col, float3(1., 0., 0.), playerPosState.x > 0 && all(uint2(playerPosState.xy) == uv_id));
+                col = lerp(col, float3(1., 0., 0.), playerPosState.x > -1 && all(uint2(playerPosState.xy) == uv_id));
                 
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
-                col = lerp(col, float3(0., 0., 1.), playerSrcDest.x > 0 && all(uint2(playerSrcDest.xy) == uv_id));
+                col = lerp(col, float3(0., 0., 1.), playerSrcDest.x > -1 && all(uint2(playerSrcDest.xy) == uv_id));
                 
-                // bool clear = validMove(board, src, uv_id);
-                // col = lerp(col, float3(0., 1., 0.), clear);
+                bool clear = validMove(board, playerSrcDest.xy, uv_id);
+                col = lerp(col, float3(0., 1., 0.), clear);
 
                 col = lerp(col.rgb, pc.rgb, pc.a);
 
