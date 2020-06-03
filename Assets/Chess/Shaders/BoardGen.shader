@@ -111,7 +111,7 @@ Shader "ChessBot/BoardGen"
                     srcPieceID = 0;
                     dest = 0;
                 }
-                srcPieceID.x += turn << 3;
+                srcPieceID.x |= turn << 3;
 
                 // Find the source position
                 uint shift = pID[srcPieceID.y] -
@@ -122,7 +122,7 @@ Shader "ChessBot/BoardGen"
                 // The board saves positions in (y, x) format
                 // y, x to x, y make sure to -1 
                 src = int2(buff & 0xf, buff >> 4) - 1;
-                //buffer[0] = float4(src.xyxy);
+
                 // Reset ID
                 idx_t = ID.x;
 
@@ -223,15 +223,15 @@ Shader "ChessBot/BoardGen"
                 uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
 
                 // 15 FPS
-                float4 timer = LoadValueFloat(_BufferTex, txTimer);
-                timer.x += unity_DeltaTime;
+                float4 timerLift = LoadValueFloat(_BufferTex, txTimerLift);
+                timerLift.x += unity_DeltaTime;
 
-                if (timer.x < 0.05)
+                if (timerLift.x < 0.05)
                 {
-                    StoreValueFloat(txTimer, timer, col, px);
+                    StoreValueFloat(txTimerLift, timerLift, col, px);
                     return col;
                 }
-                else timer.x = 0.0;
+                else timerLift.x = 0.0;
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -254,7 +254,7 @@ Shader "ChessBot/BoardGen"
                 if (_Time.y < 1.0) {
                     turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0..xx);
                     kingMoved.xyzw = 0.0;
-                    timer.xyzw = 0.0;
+                    timerLift.xyzw = 0.0;
                     playerSrcDest = -1.0;
                     playerPosState.xyzw = float4(-1..xx, 0..xx);
                 }
@@ -309,6 +309,8 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
+
+                    buffer[0] = (curBoard[T_RIGHT] << 8);
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -441,6 +443,7 @@ Shader "ChessBot/BoardGen"
                         // Figure out player inputs
                         if (playerPosState.w == PSTATE_SRC)
                         {
+                            playerSrcDest.zw = -1;
                             int2 srcPos = playerPosState.z > 0.0 ?
                                 playerPosState.xy : playerSrcDest.xy;
                             uint4 board[2] = { curBoard[B_LEFT], curBoard[B_RIGHT] };
@@ -449,15 +452,19 @@ Shader "ChessBot/BoardGen"
                             [flatten]
                             if ((pc.x & kMask) != 0 && (pc.x >> 3) == WHITE)
                             {
+
                                 playerSrcDest.xy = srcPos;
                                 playerPosState.w = PSTATE_LIFT;
+                                timerLift.y = 0.0;
                             }
                         }
                         // Wait for nothing touching
                         else if (playerPosState.w == PSTATE_LIFT)
                         {
-                            playerPosState.w = playerPosState.z > 0.0 ?
-                                PSTATE_LIFT : PSTATE_DEST;
+                            timerLift.y += unity_DeltaTime;
+                            playerPosState.w = playerPosState.z < 1.0 &&
+                                timerLift.y > 0.35 ?
+                                    PSTATE_DEST : PSTATE_LIFT;
                         }
                         // Accept next input
                         else
@@ -496,7 +503,8 @@ Shader "ChessBot/BoardGen"
 
                                 // Next turn and reset player
                                 turnWinUpdateLate.x += 1.0;
-                                playerSrcDest = -1.0;
+                                playerSrcDest.xy = -1.0;
+                                playerSrcDest.zw = destPos;
                                 playerPosState.xyzw = float4(-1..xx, 0..xx);
                             }
                             else
@@ -514,7 +522,7 @@ Shader "ChessBot/BoardGen"
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
                     StoreValueFloat(txKingMoved, kingMoved, col, px);
-                    StoreValueFloat(txTimer, timer, col, px);
+                    StoreValueFloat(txTimerLift, timerLift, col, px);
                     StoreValueFloat(txPlayerSrcDest, playerSrcDest, col, px);
                     StoreValueFloat(txPlayerPosState, playerPosState, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
