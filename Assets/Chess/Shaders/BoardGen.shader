@@ -399,6 +399,8 @@ Shader "ChessBot/BoardGen"
 
                         // Replace the current board
                         if (bestMove.x > -1) {
+                            // The y value corresponds to the parent board
+                            bestMove.xy = int2(bestMove.y - 2, 0);
                             curBoard[B_LEFT] = LoadValueUint(_BufferTex, bestMove);
                             curBoard[B_RIGHT] = LoadValueUint(_BufferTex, bestMove + int2(1, 0));
                             curBoard[T_LEFT] = LoadValueUint(_BufferTex, bestMove + int2(0, 1));
@@ -468,10 +470,38 @@ Shader "ChessBot/BoardGen"
                             if (destPos.x > -1 &&
                                 validMove(board, playerSrcDest.xy, destPos))
                             {
+                                // Find the ID
+                                uint2 pieceID = 0;
+                                pieceID.x = getPiece(board, playerSrcDest.xy);
+                                uint4 wPcs = curBoard[T_LEFT];
+                                [unroll]
+                                for (int i = 0; i < 4; i++) {
+                                    [unroll]
+                                    for (int j = 0; j < 4; j++) {
+                                        uint buf = (wPcs[i] >> (8 * (3 - j))) & 0xff;
+                                        pieceID.y = all(int2(playerSrcDest.xy) ==
+                                            (int2(buf & 0xf, buf >> 4) - 1)) ?
+                                                i * 4 + j : pieceID.y;
+                                    }
+                                }
 
+                                curBoard[B_LEFT] = doMoveNoCheck(curBoard, B_LEFT,
+                                    pieceID, playerSrcDest.xy, destPos);
+                                curBoard[B_RIGHT] = doMoveNoCheck(curBoard, B_RIGHT,
+                                    pieceID, playerSrcDest.xy, destPos);
+                                curBoard[T_LEFT] = doMoveNoCheck(curBoard, T_LEFT,
+                                    pieceID, playerSrcDest.xy, destPos);
+                                curBoard[T_RIGHT] = doMoveNoCheck(curBoard, T_RIGHT,
+                                    pieceID, playerSrcDest.xy, destPos);
+
+                                // Next turn and reset player
+                                turnWinUpdateLate.x += 1.0;
+                                playerSrcDest = -1.0;
+                                playerPosState.xyzw = float4(-1..xx, 0..xx);
                             }
                             else
                             {
+                                // Else reset source position
                                 playerPosState.w = destPos.x < 0 ?
                                     PSTATE_DEST : PSTATE_SRC;
                                 playerSrcDest = destPos.x < 0 ? playerSrcDest : -1;

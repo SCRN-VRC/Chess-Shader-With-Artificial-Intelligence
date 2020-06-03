@@ -531,13 +531,12 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
     srcPieceID.x = Piece ID
     srcPieceID.y = pID table index to determine how much to shift by
 */
-uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
+
+uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
     in int2 source, in int2 dest)
 {
 
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
-    bool valid = validMove(boardArray, source, dest);
-    if (!valid) return 0;
 
     // Top pixels containing chess board
     uint colP = srcPieceID.x >> 3;
@@ -818,7 +817,18 @@ uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
 
         return posID == T_LEFT ? boardPosArray[T_LEFT] : boardPosArray[T_RIGHT];
     }
+}
 
+/*
+    Adds a valid destination check on doMoveNoCheck()
+*/
+uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
+    in int2 source, in int2 dest)
+{
+    uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
+    bool valid = validMove(boardArray, source, dest);
+    if (!valid) return 0;
+    return doMoveNoCheck(boardPosArray, posID, srcPieceID, source, dest);
 }
 
 #endif
