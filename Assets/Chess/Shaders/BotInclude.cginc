@@ -416,7 +416,7 @@ bool clearPath (uint4 boardArray[2], int2 source, int2 dest, uint3 srcColCapPawn
     return !hit;
 }
 
-bool validMove (uint4 boardArray[2], int2 source, int2 dest)
+bool validMove (uint4 boardArray[2], int2 source, int2 dest, float2 hasKingMoved)
 {
 
     // Termination conditions
@@ -453,8 +453,8 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
                 valid = all(source + knightList[i] == dest) ? true : valid;
             }
             uint destPiece = getPiece(boardArray, dest);
-            valid = (destPiece & kMask > 0 &&
-                srcPiece >> 3 == destPiece >> 3) ? false : valid;
+            valid = ((destPiece & kMask) > 0 &&
+                (srcPiece >> 3) == (destPiece >> 3)) ? false : valid;
             break;
         }
         case (BISHOP) : {
@@ -476,11 +476,8 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
             break;
         }
         case (ROOK) : {
-            [unroll]
-            for (int i = 0; i < 8; i++) {
-                valid = all(int2(i, source.y) == dest) ? true : valid;
-                valid = all(int2(source.x, i) == dest) ? true : valid;
-            }
+            valid = source.y == dest.y ? true : valid;
+            valid = source.x == dest.x ? true : valid;
             if (valid) {
                 srcPiece.x = srcPiece.x >> 3;
                 valid = clearPath(boardArray, source, dest, uint3(srcPiece, 0..xx));
@@ -499,11 +496,9 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
                 valid = all(source + j.xy == dest) ? true : valid;
                 valid = all(source + j.zw == dest) ? true : valid;
             }
-            [unroll]
-            for (c = 0; c < 8; c++) {
-                valid = all(int2(c, source.y) == dest) ? true : valid;
-                valid = all(int2(source.x, c) == dest) ? true : valid;
-            }
+            valid = source.y == dest.y ? true : valid;
+            valid = source.x == dest.x ? true : valid;
+
             if (valid) {
                 srcPiece.x = srcPiece.x >> 3;
                 valid = clearPath(boardArray, source, dest, uint3(srcPiece, 0..xx));
@@ -514,6 +509,11 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest)
             [unroll]
             for (int i = 0; i < 8; i++) {
                 valid = all(source + kingList[i] == dest) ? true : valid;
+            }
+            // Castling
+            if (((srcPiece.x >> 3) == WHITE ? hasKingMoved.x : hasKingMoved.y) < 1.0) {
+                valid = (abs(source.x - dest.x) <= 2 && (source.y == dest.y)) ?
+                    true : valid;
             }
             if (valid) {
                 srcPiece.x = srcPiece.x >> 3;
@@ -571,39 +571,31 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
         }
         
         // Castling, compacted
-        if ((srcPieceID.x & kMask) == KING && all(source ==
-            int2(4, colP == WHITE ? 0 : 7))) {
+        if ((srcPieceID.x & kMask) == KING && abs(dest.x - source.x) == 2) {
 
             uint4 ind;
             // Array indicies for different sides
             ind = colP == WHITE ?
-                int4(T_LEFT, dest.x == 5 ? 1 : 0, B_RIGHT, 0) : 
-                int4(T_RIGHT, dest.x == 5 ? 1 : 0, B_LEFT, 3) ;
-
-            uint3 ind2;
-            // Check the spaces between king and rook are empty
-            ind2.x = dest.x == 5 ? 0xf0 : 0xff00000;
-            ind2.y = (boardPosArray[ind.z][ind.w] & ind2.x) == 0;
+                int4(T_LEFT, dest.x == 6 ? 1 : 0, B_RIGHT, 0) : 
+                int4(T_RIGHT, dest.x == 6 ? 1 : 0, B_LEFT, 3) ;
 
             // Find the rook
-            uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 5 ? 0 : 24);
+            uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 6 ? 0 : 24);
             uint2 rook = uint2((buff >> 4) & 0xf, buff & 0xf) - 1;
 
-            ind2.z = all(rook == uint2(colP == WHITE ? 0 : 7,
-                dest.x == 5 ? 7 : 0));
+            bool rookHere = all(rook == uint2(colP == WHITE ? 0 : 7,
+                dest.x == 6 ? 7 : 0));
 
             // Masks to insert/delete rook
             uint2 masks;
-            masks.x = dest.x == 5 ? ~0xf : ~0xf0000000;
+            masks.x = dest.x == 6 ? ~0xf : ~0xf0000000;
             masks.y = colP == WHITE ?
-                        dest.x == 5 ? 0xc00 : 0xc0000 :
-                        dest.x == 5 ? 0x400 : 0x40000 ;
+                        dest.x == 6 ? 0xc00 : 0xc0000 :
+                        dest.x == 6 ? 0x400 : 0x40000 ;
 
             // If theres no obstruction, and the rook is preset
             [flatten]
-            if (ind2.y && ind2.z) {
-                // Move king extra step
-                dest.x += dest.x == 5 ? 1 : -1;
+            if (rookHere) {
                 // Compiler complaining about l-values fix
                 [flatten]
                 if (ind.w == 0)
@@ -756,39 +748,31 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
         }
 
         // Castling, compacted
-        if ((srcPieceID.x & kMask) == KING && all(source ==
-            int2(4, colP == WHITE ? 0 : 7))) {
+        if ((srcPieceID.x & kMask) == KING && abs(dest.x - source.x) == 2) {
 
             uint4 ind;
             // Array indicies for different sides
             ind = colP == WHITE ?
-                int4(T_LEFT, dest.x == 5 ? 1 : 0, B_RIGHT, 0) : 
-                int4(T_RIGHT, dest.x == 5 ? 1 : 0, B_LEFT, 3) ;
-
-            uint3 ind2;
-            // Check the spaces between king and rook are empty
-            ind2.x = dest.x == 5 ? 0xf0 : 0xff00000;
-            ind2.y = (boardPosArray[ind.z][ind.w] & ind2.x) == 0;
+                int4(T_LEFT, dest.x == 6 ? 1 : 0, B_RIGHT, 0) : 
+                int4(T_RIGHT, dest.x == 6 ? 1 : 0, B_LEFT, 3) ;
 
             // Find the rook
-            uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 5 ? 0 : 24);
+            uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 6 ? 0 : 24);
             uint2 rook = uint2((buff >> 4) & 0xf, buff & 0xf) - 1;
 
-            ind2.z = all(rook == uint2(colP == WHITE ? 0 : 7,
-                dest.x == 5 ? 7 : 0));
+            bool rookHere = all(rook == uint2(colP == WHITE ? 0 : 7,
+                dest.x == 6 ? 7 : 0));
 
             // Masks to insert/delete rook
             uint2 masks;
-            masks.x = dest.x == 5 ? ~0xff : ~0xff000000;
+            masks.x = dest.x == 6 ? ~0xff : ~0xff000000;
             masks.y = colP == WHITE ?
-                        dest.x == 5 ? 0x16 : 0x14000000 :
-                        dest.x == 5 ? 0x86 : 0x84000000 ;
+                        dest.x == 6 ? 0x16 : 0x14000000 :
+                        dest.x == 6 ? 0x86 : 0x84000000 ;
 
             // If theres no obstruction, and the rook is present
             [flatten]
-            if (ind2.y && ind2.z) {
-                // Move king extra step
-                dest.x += dest.x == 5 ? 1 : -1;
+            if (rookHere) {
                 // Compiler complaining about l-values fix
                 [flatten]
                 if (ind.y == 0)
@@ -823,10 +807,10 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
     Adds a valid destination check on doMoveNoCheck()
 */
 uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
-    in int2 source, in int2 dest)
+    in int2 source, in int2 dest, in float2 hasKingMoved)
 {
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
-    bool valid = validMove(boardArray, source, dest);
+    bool valid = validMove(boardArray, source, dest, hasKingMoved);
     if (!valid) return 0;
     return doMoveNoCheck(boardPosArray, posID, srcPieceID, source, dest);
 }

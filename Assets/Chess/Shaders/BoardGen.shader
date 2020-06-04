@@ -222,7 +222,7 @@ Shader "ChessBot/BoardGen"
                 int2 px = floor(ps.uv.xy * _ScreenParams.xy);
                 uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
 
-                // 15 FPS
+                // 20 FPS
                 float4 timerLift = LoadValueFloat(_BufferTex, txTimerLift);
                 timerLift.x += unity_DeltaTime;
 
@@ -310,8 +310,6 @@ Shader "ChessBot/BoardGen"
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
 
-                    buffer[0] = (curBoard[T_RIGHT] << 8);
-
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
                     {
@@ -342,6 +340,8 @@ Shader "ChessBot/BoardGen"
                         uint2(8, 5) ? false : true);
                     kingMoved.x = moved.x ? 1.0 : 0.0;
                     kingMoved.y = moved.y ? 1.0 : 0.0;
+
+                    buffer[0] = float4(buf.x & 0xf, buf.x >> 4, kingMoved.xy);
 
                     // Check if king is dead
                     turnWinUpdateLate.y = turnWinUpdateLate.y < 0.0 ?
@@ -475,7 +475,7 @@ Shader "ChessBot/BoardGen"
                             // Make player move
                             [branch]
                             if (destPos.x > -1 &&
-                                validMove(board, playerSrcDest.xy, destPos))
+                                validMove(board, playerSrcDest.xy, destPos, kingMoved))
                             {
                                 // Find the ID
                                 uint2 pieceID = 0;
@@ -563,7 +563,7 @@ Shader "ChessBot/BoardGen"
                 //     in int2 source, in int2 dest)
 
                         col = (doMove(parentBoard, uint(singleUV_ID.z),
-                            srcPieceID, src, dest));
+                            srcPieceID, src, dest, kingMoved));
                     }
                 }
                 return col;

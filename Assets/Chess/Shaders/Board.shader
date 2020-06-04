@@ -123,7 +123,8 @@
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
                 col = lerp(col, float3(0., 0., 1.), playerSrcDest.x > -1 && all(uint2(playerSrcDest.xy) == uv_id));
                 
-                bool clear = validMove(board, playerSrcDest.xy, uv_id);
+                float2 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
+                bool clear = validMove(board, playerSrcDest.xy, uv_id, kingMoved);
                 col = lerp(col, float3(0., 1., 0.), clear);
 
                 col = lerp(col.rgb, pc.rgb, pc.a);
