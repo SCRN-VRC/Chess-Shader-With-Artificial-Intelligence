@@ -319,6 +319,11 @@ Shader "ChessBot/BoardGen"
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
 
+                    // buffer[0] = (uint4((curBoard[T_RIGHT][2] & 0xffff0000) >> 16,
+                    //     curBoard[T_RIGHT][2] & 0xffff,
+                    //     (curBoard[T_RIGHT][3] & 0xffff0000) >> 16,
+                    //     curBoard[T_RIGHT][3] & 0xffff));
+
                     // Increment board generation counter
                     // only on computers turn
                     turnWinUpdateLate.z = turnWinUpdateLate.z < 6.0 &&
@@ -341,7 +346,7 @@ Shader "ChessBot/BoardGen"
                     kingMoved.x = moved.x ? 1.0 : 0.0;
                     kingMoved.y = moved.y ? 1.0 : 0.0;
 
-                    buffer[0] = float4(buf.x & 0xf, buf.x >> 4, kingMoved.xy);
+                    //buffer[0] = float4(buf.x & 0xf, buf.x >> 4, kingMoved.xy);
 
                     // Check if king is dead
                     turnWinUpdateLate.y = turnWinUpdateLate.y < 0.0 ?
@@ -393,9 +398,9 @@ Shader "ChessBot/BoardGen"
                         [unroll]
                         for (int i = txEvalArea.x; i <= txEvalArea.z; i++) {
                             float4 eOut = asfloat(_BufferTex.Load(int3(i, txEvalArea.y, 0)));
-                            bestMove = eOut.x < bestScore && eOut.x > FLT_MIN ?
+                            bestMove = ((eOut.x < bestScore) && (eOut.x > FLT_MIN)) ?
                                 eOut.yz : bestMove;
-                            bestScore = eOut.x < bestScore && eOut.x > FLT_MIN ?
+                            bestScore = ((eOut.x < bestScore) && (eOut.x > FLT_MIN)) ?
                                 eOut.x : bestScore;
                         }
 

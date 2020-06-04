@@ -1,6 +1,8 @@
 #ifndef _BOT_INCLUDE
 #define _BOT_INCLUDE
 
+#include "Debugging.cginc"
+
 #define PAWN        1   // 0001
 #define KNIGHT      2   // 0010
 #define BISHOP      3   // 0011
@@ -296,24 +298,24 @@ float eval (uint4 boardTop[2], float lateGame)
         buf = (boardTop[0][2] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
         boardScore.x += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? PAWN : 0, WHITE);
-        pieceScore.x += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+            (pos.x + pos.y) > 0 ? PAWN : 0, WHITE);
+        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         buf = (boardTop[0][3] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
         boardScore.x += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? PAWN : 0, WHITE);
-        pieceScore.x += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+            (pos.x + pos.y) > 0 ? PAWN : 0, WHITE);
+        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         // Black
         buf = (boardTop[1][2] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
         boardScore.y += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? PAWN : 0, BLACK);
-        pieceScore.y += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+            (pos.x + pos.y) > 0 ? PAWN : 0, BLACK);
+        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         buf = (boardTop[1][3] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
         boardScore.y += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? PAWN : 0, BLACK);
-        pieceScore.y += pos.x + pos.y > 0 ? pieceVal[PAWN] : 0.0;
+            (pos.x + pos.y) > 0 ? PAWN : 0, BLACK);
+        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
     }
 
     // Queen side
@@ -323,23 +325,23 @@ float eval (uint4 boardTop[2], float lateGame)
         // Queen
         pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? QUEEN : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[QUEEN] : 0.0;
+            (pos.x + pos.y) > 0 ? QUEEN : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[QUEEN] : 0.0;
         // Bishop
         pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? BISHOP : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[BISHOP] : 0.0;
+            (pos.x + pos.y) > 0 ? BISHOP : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[BISHOP] : 0.0;
         // Knight
         pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Rooks
         pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? ROOK : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[ROOK] : 0.0;
+            (pos.x + pos.y) > 0 ? ROOK : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
     }
 
     // King side
@@ -349,24 +351,23 @@ float eval (uint4 boardTop[2], float lateGame)
         // Rook
         pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? ROOK : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[ROOK] : 0.0;
+            (pos.x + pos.y) > 0 ? ROOK : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
         // Knight
         pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Bishop
         pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? KNIGHT : 0, i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KNIGHT] : 0.0;
+            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // King, 2 scoring tables
         pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
         boardScore[i] += getBoardScore(pos - 1,
-            pos.x + pos.y > 0 ? (lateGame > 0.0 ? KING + 1 : KING) : 0,
-            i == 0 ? WHITE : BLACK);
-        pieceScore[i] += pos.x + pos.y > 0 ? pieceVal[KING] : 0.0;
+            (pos.x + pos.y) > 0 ? (lateGame > 0.0 ? KING + 1 : KING) : 0, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KING] : 0.0;
     }
     return (boardScore.x - boardScore.y) + (pieceScore.x - pieceScore.y);
 }
@@ -374,7 +375,7 @@ float eval (uint4 boardTop[2], float lateGame)
 uint getPiece (uint4 boardArray[2], int2 source)
 {
     uint srcPiece = boardArray[source.y > 3 ? 0 : 1][source.y > 3 ? source.y - 4 : source.y];
-    srcPiece = (srcPiece >> (7 - source.x) * 4) & pMask;
+    srcPiece = (srcPiece >> ((7 - source.x) * 4)) & pMask;
     return srcPiece;
 }
 
@@ -530,6 +531,7 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest, float2 hasKingMoved
     posID = Corner ID, which are the UVs
     srcPieceID.x = Piece ID
     srcPieceID.y = pID table index to determine how much to shift by
+                   in the packed bits
 */
 
 uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
@@ -537,8 +539,6 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
 {
 
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
-
-    // Top pixels containing chess board
     uint colP = srcPieceID.x >> 3;
 
     [branch]
@@ -553,16 +553,16 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
             [loop]
             for (int i = 5; i >= 2; i--) {
                 uint2 checkPc[2] = searchID[i];
-                uint buff = (boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
-                    [checkPc[0].x] >> checkPc[0].y) & 0xff;
+                uint buff = ((boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
+                    [checkPc[0].x]) >> checkPc[0].y) & 0xff;
 
                 // Captured piece
                 if (dot(uint2(buff >> 4, buff & 0xf), 1..xx) == 0) {
                     destPiece = i;
                     break;
                 }
-                buff = (boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
-                    [checkPc[1].x] >> checkPc[1].y) & 0xff;
+                buff = ((boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
+                    [checkPc[1].x]) >> checkPc[1].y) & 0xff;
                 if (dot(uint2(buff >> 4, buff & 0xf), 1..xx) == 0) {
                     destPiece = i;
                     break;
@@ -582,8 +582,13 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
             // Find the rook
             uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 6 ? 0 : 24);
             uint2 rook = uint2((buff >> 4) & 0xf, buff & 0xf) - 1;
+            
+            uint3 ind2; 
+            // Check the spaces between king and rook are empty 
+            ind2.x = dest.x == 6 ? 0xf0 : 0xff00000;    
+            ind2.y = (boardPosArray[ind.z][ind.w] & ind2.x) == 0;
 
-            bool rookHere = all(rook == uint2(colP == WHITE ? 0 : 7,
+            ind2.z = all(rook == uint2(colP == WHITE ? 0 : 7,
                 dest.x == 6 ? 7 : 0));
 
             // Masks to insert/delete rook
@@ -595,7 +600,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
 
             // If theres no obstruction, and the rook is preset
             [flatten]
-            if (rookHere) {
+            if (ind2.y && ind2.z) {
                 // Compiler complaining about l-values fix
                 [flatten]
                 if (ind.w == 0)
@@ -661,7 +666,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
     else {
         // Replace destination
         uint destPc = getPiece(boardArray, dest);
-        uint destX = destPc >> 3 == WHITE ? T_LEFT : T_RIGHT;
+        uint destX = (destPc >> 3) == WHITE ? T_LEFT : T_RIGHT;
         uint2 destY[2] = searchID[destPc & kMask];
         
         // If its a pawn, find which pawn it is
@@ -670,7 +675,6 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
         else if ((destPc & kMask) == PAWN) {
             [unroll]
             for (int k = 2; k <= 3; k++) {
-                //int j = 24;
                 [unroll]
                 for (int j = 0; j < 32; j += 8) {
                     uint pos = 0xff & (boardPosArray[destX][k] >> j);
@@ -726,8 +730,8 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
             [loop]
             for (int i = 5; i >= 2; i--) {
                 uint2 checkPc[2] = searchID[i];
-                uint buff = (boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
-                    [checkPc[0].x] >> checkPc[0].y) & 0xff;
+                uint buff = ((boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
+                    [checkPc[0].x]) >> checkPc[0].y) & 0xff;
                 // Captured piece
                 if (dot(uint2(buff >> 4, buff & 0xf), 1..xx) == 0) {
                     srcXY.x = colP == WHITE ? T_LEFT : T_RIGHT;
@@ -736,8 +740,8 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
                     break;
                 }
 
-                buff = (boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
-                    [checkPc[1].x] >> checkPc[1].y) & 0xff;
+                buff = ((boardPosArray[colP == WHITE ? T_LEFT : T_RIGHT]
+                    [checkPc[1].x]) >> checkPc[1].y) & 0xff;
                 if (dot(uint2(buff >> 4, buff & 0xf), 1..xx) == 0) {
                     srcXY.x = colP == WHITE ? T_LEFT : T_RIGHT;
                     srcXY.y = checkPc[1].x;
@@ -757,10 +761,14 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
                 int4(T_RIGHT, dest.x == 6 ? 1 : 0, B_LEFT, 3) ;
 
             // Find the rook
-            uint buff = boardPosArray[ind.x][ind.y] >> (dest.x == 6 ? 0 : 24);
+            uint buff = (boardPosArray[ind.x][ind.y]) >> (dest.x == 6 ? 0 : 24);
             uint2 rook = uint2((buff >> 4) & 0xf, buff & 0xf) - 1;
 
-            bool rookHere = all(rook == uint2(colP == WHITE ? 0 : 7,
+            uint3 ind2; 
+            // Check the spaces between king and rook are empty 
+            ind2.x = dest.x == 5 ? 0xf0 : 0xff00000;    
+            ind2.y = (boardPosArray[ind.z][ind.w] & ind2.x) == 0;
+            ind2.z = all(rook == uint2(colP == WHITE ? 0 : 7,
                 dest.x == 6 ? 7 : 0));
 
             // Masks to insert/delete rook
@@ -772,7 +780,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
 
             // If theres no obstruction, and the rook is present
             [flatten]
-            if (rookHere) {
+            if (ind2.y && ind2.z) {
                 // Compiler complaining about l-values fix
                 [flatten]
                 if (ind.y == 0)
@@ -791,7 +799,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
 
         // New position
         dest = dest + 1;
-        uint newPos = ((dest.y & pMask) << 4 | (dest.x & pMask)) << off;
+        uint newPos = (((dest.y & pMask) << 4) | (dest.x & pMask)) << off;
         // Compiler complaining about l-values fix
         [flatten]
         if (srcXY.y == 0) boardPosArray[srcXY.x][0] |= newPos;
