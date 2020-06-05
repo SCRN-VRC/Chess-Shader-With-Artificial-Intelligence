@@ -215,8 +215,6 @@ uint4 newBoard (uint posID)
             0b 0000 0000 0000 0000 0000 0000 0000 0000
             0b 0000 0000 0000 0000 0000 0000 0000 0000
         */
-        // uOut = uint4(0, 0, 4369, 16949);
-        // uOut = (uOut << 16) | uint4(0, 0, 4369, 25380);
         return uint4(0u, 0u, 286331153u, 1110795044u);
     }
     else if (posID == B_RIGHT)
@@ -228,8 +226,6 @@ uint4 newBoard (uint posID)
             0b 1100 1010 1011 1101 1110 1011 1010 1100
         */
         // Make 0,0 the bottom left
-        // uOut = uint4(51901, 39321, 0, 0);
-        // uOut = (uOut << 16) | uint4(60332, 39321, 0, 0);
         return uint4(3401444268u, 2576980377u, 0u, 0u);
     }
     else if (posID == T_LEFT)
@@ -252,8 +248,6 @@ uint4 newBoard (uint posID)
             // King pawns
             0b 0010 0101 0010 0110 0010 0111 0010 1000
         */
-        // uOut = uint4(4370, 5398, 8482, 9510);
-        // uOut = (uOut << 16) | uint4(4884, 5912, 8996, 10024);
         return uint4(286397204u, 353769240u, 555885348u, 623257384u);
     }
     else if (posID == T_RIGHT)
@@ -269,8 +263,6 @@ uint4 newBoard (uint posID)
             0b 0111 0001 0111 0010 0111 0011 0111 0100
             0b 0111 0101 0111 0110 0111 0111 0111 1000
         */
-        // uOut = uint4(33154, 34182, 29042, 30070);
-        // uOut = (uOut << 16) | uint4(33668, 34696, 29556, 30584);
         return uint4(2172814212u, 2240186248u, 1903326068u, 1970698104u);
     }
 
@@ -535,7 +527,7 @@ bool validMove (uint4 boardArray[2], int2 source, int2 dest, float2 hasKingMoved
 */
 
 uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
-    in int2 source, in int2 dest)
+    in int2 source, in int2 dest, int debug)
 {
 
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
@@ -669,6 +661,9 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
         uint destX = (destPc >> 3) == WHITE ? T_LEFT : T_RIGHT;
         uint2 destY[2] = searchID[destPc & kMask];
         
+                    if (debug == 1 && all(srcPieceID == uint2(9, 12)))
+                        buffer[0] = float4(destPc, 0, dest + 1);
+
         // If its a pawn, find which pawn it is
         [branch]
         if ((destPc & kMask) == 0) { /* Nothing! */ }
@@ -678,7 +673,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
                 [unroll]
                 for (int j = 0; j < 32; j += 8) {
                     uint pos = 0xff & (boardPosArray[destX][k] >> j);
-                    if (all(int2(pos & 0xf, pos >> 4) == dest + 1)) {
+                    if (all(int2(pos & 0xf, pos >> 4) == (dest + 1))) {
                         uint destMask = 0xff << j;
                         // Compiler complaining about l-values fix
                         [flatten]
@@ -820,7 +815,7 @@ uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
     uint4 boardArray[2] = { boardPosArray[B_LEFT], boardPosArray[B_RIGHT] };
     bool valid = validMove(boardArray, source, dest, hasKingMoved);
     if (!valid) return 0;
-    return doMoveNoCheck(boardPosArray, posID, srcPieceID, source, dest);
+    return doMoveNoCheck(boardPosArray, posID, srcPieceID, source, dest, 0);
 }
 
 #endif

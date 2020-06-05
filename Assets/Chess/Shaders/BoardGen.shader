@@ -109,7 +109,7 @@ Shader "ChessBot/BoardGen"
                 else
                 {
                     srcPieceID = 0;
-                    dest = 0;
+                    dest = -1000;
                 }
                 srcPieceID.x |= turn << 3;
 
@@ -252,7 +252,7 @@ Shader "ChessBot/BoardGen"
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0) {
-                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 0..xx);
+                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 6.0, 0.0);
                     kingMoved.xyzw = 0.0;
                     timerLift.xyzw = 0.0;
                     playerSrcDest = -1.0;
@@ -309,6 +309,8 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
+                    
+                    //buffer[0] = (curBoard[3][2] & 0xff);
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -345,8 +347,6 @@ Shader "ChessBot/BoardGen"
                         uint2(8, 5) ? false : true);
                     kingMoved.x = moved.x ? 1.0 : 0.0;
                     kingMoved.y = moved.y ? 1.0 : 0.0;
-
-                    //buffer[0] = float4(buf.x & 0xf, buf.x >> 4, kingMoved.xy);
 
                     // Check if king is dead
                     turnWinUpdateLate.y = turnWinUpdateLate.y < 0.0 ?
@@ -389,7 +389,8 @@ Shader "ChessBot/BoardGen"
                     float checkEval = asfloat(_BufferTex.Load(int3(txEvalArea.xy, 0)).w);
                     // Game not over, correct update phase
                     [branch]
-                    if (checkEval > 0.0 && turnWinUpdateLate.z == 6.0 &&
+                    if ((uint(turnWinUpdateLate.x) % 2 == BLACK) &&
+                        checkEval > 0.0 && turnWinUpdateLate.z == 6.0 &&
                         turnWinUpdateLate.y < 0.0)
                     {
                         // Pick best move for computer (black)
@@ -416,7 +417,6 @@ Shader "ChessBot/BoardGen"
 
                         // Player's turn
                         turnWinUpdateLate.x += 1.0;
-                        turnWinUpdateLate.z = 0.0;
                     }
 
                     // Player's turn
@@ -497,17 +497,25 @@ Shader "ChessBot/BoardGen"
                                     }
                                 }
 
-                                curBoard[B_LEFT] = doMoveNoCheck(curBoard, B_LEFT,
-                                    pieceID, playerSrcDest.xy, destPos);
-                                curBoard[B_RIGHT] = doMoveNoCheck(curBoard, B_RIGHT,
-                                    pieceID, playerSrcDest.xy, destPos);
-                                curBoard[T_LEFT] = doMoveNoCheck(curBoard, T_LEFT,
-                                    pieceID, playerSrcDest.xy, destPos);
-                                curBoard[T_RIGHT] = doMoveNoCheck(curBoard, T_RIGHT,
-                                    pieceID, playerSrcDest.xy, destPos);
+                                uint4 pastBoard[4] = {
+                                    curBoard[B_LEFT], curBoard[B_RIGHT],
+                                    curBoard[T_LEFT], curBoard[T_RIGHT]
+                                };
+
+                                curBoard[B_LEFT] = doMoveNoCheck(pastBoard, B_LEFT,
+                                    pieceID, playerSrcDest.xy, destPos, 1);
+                                curBoard[B_RIGHT] = doMoveNoCheck(pastBoard, B_RIGHT,
+                                    pieceID, playerSrcDest.xy, destPos, 1);
+                                curBoard[T_LEFT] = doMoveNoCheck(pastBoard, T_LEFT,
+                                    pieceID, playerSrcDest.xy, destPos, 1);
+                                curBoard[T_RIGHT] = doMoveNoCheck(pastBoard, T_RIGHT,
+                                    pieceID, playerSrcDest.xy, destPos, 1);
+                                
+                                //buffer[0] = float4(pieceID, destPos);
 
                                 // Next turn and reset player
                                 turnWinUpdateLate.x += 1.0;
+                                turnWinUpdateLate.z = 0.0;
                                 playerSrcDest.xy = -1.0;
                                 playerSrcDest.zw = destPos;
                                 playerPosState.xyzw = float4(-1..xx, 0..xx);
@@ -536,6 +544,7 @@ Shader "ChessBot/BoardGen"
                 else if (all(px < int2(boardParams.zw)))
                 {
                     // Stagger the move generation for slower GPUs
+                    [branch]
                     if (turnWinUpdateLate.z < 6.0 &&
                         px.y >= boardUpdate[int(turnWinUpdateLate.z)] &&
                         px.y < boardUpdate[int(turnWinUpdateLate.z + 1.0)])
@@ -555,14 +564,12 @@ Shader "ChessBot/BoardGen"
                         int2 dest = 0;
 
                         // Anything after the first row of boards is the following turn
-                        turnWinUpdateLate.x += px.y > 1 ? 1.0 : 0.0;
-
+                        uint turn = px.y > 1 ? WHITE : BLACK;
                 // void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
                 //     out uint2 srcPieceID, out int2 src, out int2 dest)
 
                         doMoveParams(parentBoard, floor(px.x * 0.5),
-                            uint(fmod(turnWinUpdateLate.x, 2)),
-                            srcPieceID, src, dest);
+                            turn, srcPieceID, src, dest);
 
                 // uint4 doMove(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceID,
                 //     in int2 source, in int2 dest)

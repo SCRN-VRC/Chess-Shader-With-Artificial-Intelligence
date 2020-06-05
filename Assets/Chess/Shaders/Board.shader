@@ -62,56 +62,112 @@
                 col = lerp(_Color2, _Color1, col.r);
                 float2 grid_uv = fmod(i.uv * 8, 1.);
 
-                int index = fmod(floor(_Time.y), 2);
-                // int index2 = fmod(floor(_Time.w / 8), 8);
-                //uint4 boardBottom[4] = { newBoard(0), newBoard(1), newBoard(2), newBoard(3) };
+                uint4 board[2] = { LoadValueUint(_BufferTex, _Pixel * 2),
+                    LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0)) };
 
-                // uint4 boardBottom[4] = { castleTests[0][0], castleTests[0][1],
-                //     castleTests[0][2], castleTests[0][3] };
+                // uint4 fullBoard[4] = {
+                //     fullTests[0][0], fullTests[0][1],
+                //     fullTests[0][2], fullTests[0][3]
+                // };
+                // uint4 board[2] = { fullBoard[0], fullBoard[1] };
 
-                uint4 boardBottom[4];
-                boardBottom[B_LEFT] =  LoadValueUint(_BufferTex, _Pixel * 2);
-                boardBottom[B_RIGHT] = LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0));
-                boardBottom[T_LEFT] =  LoadValueUint(_BufferTex, _Pixel * 2 + uint2(0, 1));
-                boardBottom[T_RIGHT] = LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 1));
+                // uint2 srcPieceID = uint2(9, 12);
+                // int2 src = int2(4, 3);
+                // int2 dest = int2(3, 4);
 
-                uint4 board[2] = { boardBottom[0], boardBottom[1] };
-
-                //buffer[0] = float4((boardBottom[2] & 0xffff0000));
-
-                // int2 src = int2(0, 1);
-                // int2 dest = int2(0, 2);
-                // uint2 pid = uint2(9, 8);
-
-                // uint4 moved[4] = {
-                //     doMove(boardBottom, 0, pid, src, dest),
-                //     doMove(boardBottom, 1, pid, src, dest),
-                //     doMove(boardBottom, 2, pid, src, dest),
-                //     doMove(boardBottom, 3, pid, src, dest)
+                // uint4 nextBoard[4] = {
+                //     doMove(fullBoard, 0, srcPieceID, src, dest, 0),
+                //     doMove(fullBoard, 1, srcPieceID, src, dest, 0),
+                //     doMove(fullBoard, 2, srcPieceID, src, dest, 0),
+                //     doMove(fullBoard, 3, srcPieceID, src, dest, 0)
                 // };
 
-                // uint4 newPos[2] = { moved[0], moved[1] };
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
 
-                // boardBottom[0] = moved[0];
-                // boardBottom[1] = moved[1];
-                // boardBottom[2] = moved[2];
-                // boardBottom[3] = moved[3];
-                // board[0] = boardBottom[0];
-                // board[1] = boardBottom[1];
-                // src = int2(2, 6);
-                // dest = int2(2, 4);
-                // pid = uint2(PAWN, 10);
-                // moved[0] = doMove(boardBottom, 0, pid, src, dest);
-                // moved[1] = doMove(boardBottom, 1, pid, src, dest);
-                // moved[2] = doMove(boardBottom, 2, pid, src, dest);
-                // moved[3] = doMove(boardBottom, 3, pid, src, dest);
-                // newPos[0] = moved[0];
-                // newPos[1] = moved[1];
+                // srcPieceID = uint2(5, 3);
+                // src = int2(3, 7);
+                // dest = int2(3, 4);
 
-                uint curPos;// = getPiece(newPos, uv_id);
-                //if (index > 0.5) {
-                    curPos = getPiece(board, uv_id);
-                //}
+                // fullBoard[0] = nextBoard[0];
+                // fullBoard[1] = nextBoard[1];
+                // fullBoard[2] = nextBoard[2];
+                // fullBoard[3] = nextBoard[3];
+
+                // nextBoard[0] = doMove(fullBoard, 0, srcPieceID, src, dest, 0);
+                // nextBoard[1] = doMove(fullBoard, 1, srcPieceID, src, dest, 0);
+                // nextBoard[2] = doMove(fullBoard, 2, srcPieceID, src, dest, 0);
+                // nextBoard[3] = doMove(fullBoard, 3, srcPieceID, src, dest, 0);
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
+
+                // srcPieceID = uint2(9, 11);
+                // src = int2(3, 1);
+                // dest = int2(3, 3);
+
+                // fullBoard[0] = nextBoard[0];
+                // fullBoard[1] = nextBoard[1];
+                // fullBoard[2] = nextBoard[2];
+                // fullBoard[3] = nextBoard[3];
+
+                // nextBoard[0] = doMove(fullBoard, 0, srcPieceID, src, dest, 0);
+                // nextBoard[1] = doMove(fullBoard, 1, srcPieceID, src, dest, 0);
+                // nextBoard[2] = doMove(fullBoard, 2, srcPieceID, src, dest, 0);
+                // nextBoard[3] = doMove(fullBoard, 3, srcPieceID, src, dest, 0);
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
+
+                // srcPieceID = uint2(1, 12);
+                // src = int2(4, 4);
+                // dest = int2(4, 3);
+
+                // fullBoard[0] = nextBoard[0];
+                // fullBoard[1] = nextBoard[1];
+                // fullBoard[2] = nextBoard[2];
+                // fullBoard[3] = nextBoard[3];
+
+                // nextBoard[0] = doMove(fullBoard, 0, srcPieceID, src, dest, 0);
+                // nextBoard[1] = doMove(fullBoard, 1, srcPieceID, src, dest, 0);
+                // nextBoard[2] = doMove(fullBoard, 2, srcPieceID, src, dest, 0);
+                // nextBoard[3] = doMove(fullBoard, 3, srcPieceID, src, dest, 0);
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
+
+                // srcPieceID = uint2(9, 10);
+                // src = int2(2, 1);
+                // dest = int2(2, 3);
+
+                // fullBoard[0] = nextBoard[0];
+                // fullBoard[1] = nextBoard[1];
+                // fullBoard[2] = nextBoard[2];
+                // fullBoard[3] = nextBoard[3];
+
+                // nextBoard[0] = doMove(fullBoard, 0, srcPieceID, src, dest, 0);
+                // nextBoard[1] = doMove(fullBoard, 1, srcPieceID, src, dest, 0);
+                // nextBoard[2] = doMove(fullBoard, 2, srcPieceID, src, dest, 0);
+                // nextBoard[3] = doMove(fullBoard, 3, srcPieceID, src, dest, 0);
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
+
+                // srcPieceID = uint2(5, 3);
+                // src = int2(3, 4);
+                // dest = int2(3, 3);
+
+                // fullBoard[0] = nextBoard[0];
+                // fullBoard[1] = nextBoard[1];
+                // fullBoard[2] = nextBoard[2];
+                // fullBoard[3] = nextBoard[3];
+
+                // nextBoard[0] = doMove(fullBoard, 0, srcPieceID, src, dest, 0);
+                // nextBoard[1] = doMove(fullBoard, 1, srcPieceID, src, dest, 0);
+                // nextBoard[2] = doMove(fullBoard, 2, srcPieceID, src, dest, 0);
+                // nextBoard[3] = doMove(fullBoard, 3, srcPieceID, src, dest, 0);
+                // board[0] = nextBoard[0];
+                // board[1] = nextBoard[1];
+
+                // buffer[0] = (nextBoard[3][2] & 0xff);
+
+                uint curPos = getPiece(board, uv_id);
 
                 float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
                 float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
