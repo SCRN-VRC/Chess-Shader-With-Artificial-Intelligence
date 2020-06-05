@@ -310,7 +310,8 @@ Shader "ChessBot/BoardGen"
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
                     
-                    //buffer[0] = (curBoard[3][2] & 0xff);
+                    uint4 bTop[2] = {curBoard[T_LEFT], curBoard[T_RIGHT]};
+                    buffer[0] = eval(bTop, 0).xxxx;
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)

@@ -187,7 +187,7 @@ static const float pcTbl[8][8][8] =
 // Change origin to bottom left
 // Flip board if it's black
 float getBoardScore(int2 src, int z, int w) {
-    src = max(src, 0);
+    if ((src.x + src.y) <= 0) return 0;
     return pcTbl[z][w == WHITE ? 7 - src.y : src.y][src.x];
 }
 
@@ -202,7 +202,6 @@ static const int2 kingList[8] = { 0, 1, 1, 1, 1, 0, 1, -1,
 // Board info stored in 2x2
 uint4 newBoard (uint posID)
 {
-    //uint4 uOut = 0;
     [flatten]
     if (posID == B_LEFT)
     {
@@ -289,79 +288,67 @@ float eval (uint4 boardTop[2], float lateGame)
         // White
         buf = (boardTop[0][2] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
-        boardScore.x += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? PAWN : 0, WHITE);
-        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
+        boardScore.y += getBoardScore(pos - 1, PAWN, WHITE);
+        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         buf = (boardTop[0][3] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
-        boardScore.x += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? PAWN : 0, WHITE);
-        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
+        boardScore.y += getBoardScore(pos - 1, PAWN, WHITE);
+        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         // Black
         buf = (boardTop[1][2] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
-        boardScore.y += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? PAWN : 0, BLACK);
-        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
+        boardScore.x += getBoardScore(pos - 1, PAWN, BLACK);
+        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
         buf = (boardTop[1][3] >> i) & 0xff;
         pos = int2(buf & 0xf, buf >> 4);
-        boardScore.y += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? PAWN : 0, BLACK);
-        pieceScore.y += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
+        boardScore.x += getBoardScore(pos - 1, PAWN, BLACK);
+        pieceScore.x += (pos.x + pos.y) > 0 ? pieceVal[PAWN] : 0.0;
     }
 
     // Queen side
     [unroll]
     for (i = 0; i < 2; i++) {
-        buf = boardTop[i][0];
+        buf = boardTop[1 - i][0];
         // Queen
         pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? QUEEN : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, QUEEN, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[QUEEN] : 0.0;
         // Bishop
         pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? BISHOP : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, BISHOP, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[BISHOP] : 0.0;
         // Knight
         pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, KNIGHT, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Rooks
         pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? ROOK : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, ROOK, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
     }
 
     // King side
     [unroll]
     for (i = 0; i < 2; i++) {
-        buf = boardTop[i][1];
+        buf = boardTop[1 - i][1];
         // Rook
         pos = int2(buf & 0xf, (buf & 0xf0) >> 4);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? ROOK : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, ROOK, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
         // Knight
         pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, KNIGHT, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Bishop
         pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? KNIGHT : 0, i);
-        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
+        boardScore[i] += getBoardScore(pos - 1, BISHOP, i);
+        pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[BISHOP] : 0.0;
         // King, 2 scoring tables
         pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
-        boardScore[i] += getBoardScore(pos - 1,
-            (pos.x + pos.y) > 0 ? (lateGame > 0.0 ? KING + 1 : KING) : 0, i);
+        boardScore[i] += getBoardScore(pos - 1, (lateGame > 0.0 ? KING + 1 : KING), i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KING] : 0.0;
     }
-    return (boardScore.x - boardScore.y) + (pieceScore.x - pieceScore.y);
+    return (pieceScore.y - pieceScore.x) + (boardScore.y - boardScore.x);
 }
 
 uint getPiece (uint4 boardArray[2], int2 source)
@@ -660,9 +647,6 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
         uint destPc = getPiece(boardArray, dest);
         uint destX = (destPc >> 3) == WHITE ? T_LEFT : T_RIGHT;
         uint2 destY[2] = searchID[destPc & kMask];
-        
-                    if (debug == 1 && all(srcPieceID == uint2(9, 12)))
-                        buffer[0] = float4(destPc, 0, dest + 1);
 
         // If its a pawn, find which pawn it is
         [branch]
