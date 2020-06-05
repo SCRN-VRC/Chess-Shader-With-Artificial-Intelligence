@@ -89,7 +89,7 @@ Shader "ChessBot/BoardGen"
                 {
                     idx_t -= moveNum[BISHOP].y;
                     srcPieceID = uint2(ROOK,
-                        idx_t < uint(moveNum[ROOK].x * 0.5) ? 0 : 7);
+                        (idx_t < (uint(moveNum[ROOK].x * 0.5))) ? 0 : 7);
                     dest = 0;
                 }
                 // Queen
@@ -309,6 +309,9 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
+                    
+                    //uint4 top[2] = { curBoard[T_LEFT], curBoard[T_RIGHT] };
+                    //buffer[0] = eval(top, turnWinUpdateLate.w);
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -317,12 +320,11 @@ Shader "ChessBot/BoardGen"
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
+                        // curBoard[B_LEFT] = fullTests[1][0];
+                        // curBoard[B_RIGHT] = fullTests[1][1];
+                        // curBoard[T_LEFT] = fullTests[1][2];
+                        // curBoard[T_RIGHT] = fullTests[1][3];
                     }
-
-                    // buffer[0] = (uint4((curBoard[T_RIGHT][2] & 0xffff0000) >> 16,
-                    //     curBoard[T_RIGHT][2] & 0xffff,
-                    //     (curBoard[T_RIGHT][3] & 0xffff0000) >> 16,
-                    //     curBoard[T_RIGHT][3] & 0xffff));
 
                     // Increment board generation counter
                     // only on computers turn
@@ -434,11 +436,10 @@ Shader "ChessBot/BoardGen"
                             }
                         }
                         touchPosCount.xy = floor(touchPosCount.xy /
-                            max(touchPosCount.z, 1.) * 0.33333 + .3333);
+                            max(touchPosCount.z, 1.) * 0.3333 + .3333);
 
                         // x is flipped
                         touchPosCount.x = 7.0 - touchPosCount.x;
-                        buffer[0] = touchPosCount.xyzz;
 
                         playerPosState.xy = touchPosCount.z > 0.0 ?
                             touchPosCount.xy : playerPosState.xy;

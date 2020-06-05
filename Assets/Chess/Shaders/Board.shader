@@ -66,8 +66,8 @@
                     LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0)) };
 
                 // uint4 fullBoard[4] = {
-                //     fullTests[0][0], fullTests[0][1],
-                //     fullTests[0][2], fullTests[0][3]
+                //     fullTests[1][0], fullTests[1][1],
+                //     fullTests[1][2], fullTests[1][3]
                 // };
                 // uint4 board[2] = { fullBoard[0], fullBoard[1] };
 

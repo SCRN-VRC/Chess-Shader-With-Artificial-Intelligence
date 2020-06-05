@@ -376,6 +376,9 @@ bool clearPath (uint4 boardArray[2], int2 source, int2 dest, uint3 srcColCapPawn
     // Check destination
     uint curPos = getPiece(boardArray, i);
 
+    if (all(source == int2(0, 0)) && all(dest == int2(0, 1)))
+        buffer[0] = float4(1338, curPos, 0, 0);
+
     // If it's a pawn, it can't capture where it moves
     [flatten]
     if (srcColCapPawn.z) {
