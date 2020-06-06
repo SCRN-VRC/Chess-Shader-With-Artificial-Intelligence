@@ -11,7 +11,7 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * Bad board evaluation function, I just copied some numbers off a site
 * Lots of wasted space, no dynamic memory allocation in shaders
 
-## Setup for VRChat
+## Setup for VRChat (Sorry doesn't work in-game yet, the setups wrong)
 1. Import the ChessShaderWithAI.unitypackage
 2. Put the ChessAI prefab on your avatar
 3. I suggest using FinalIK or Rigidbodies to plant the chess board in world space, and the [Inventory System](https://github.com/Xiexe/VRCInventorySystem) to enable/disable the game object.
