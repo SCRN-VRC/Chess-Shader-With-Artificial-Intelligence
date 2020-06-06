@@ -28,7 +28,7 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * The min-max tree is generated through six steps, each with a waiting period of 15ms in between to help reduce GPU stress.
 * The first 149 boards are generated from the current board position, there's a total of 149 moves that can be done per turn.
 * From those 149 boards, the AI generates another 149 for every single one.
-* At the end of the cycle, the path that benefits the CPU according to the evaluation function is picked.
+* At the end of the cycle, the path that benefits the computer according to the evaluation function is picked.
 
 <img src="Images/Eval.png"/>
 
