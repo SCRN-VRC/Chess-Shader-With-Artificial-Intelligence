@@ -119,7 +119,7 @@ Shader "ChessBot/BoardGen"
                     srcPieceID = 0;
                     dest = -1000;
                 }
-                srcPieceID.x |= turn << 3;
+                srcPieceID.x |= (turn << 3);
 
                 // Find the source position
                 uint shift = pID[srcPieceID.y] -
