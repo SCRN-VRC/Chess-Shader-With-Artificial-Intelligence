@@ -3,10 +3,12 @@
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        [Toggle] _FlipX ("Flip X", Int) = 0
     }
     SubShader
     {
         Tags { "RenderType"="Opaque" }
+        Cull Off
         LOD 100
 
         Pass
@@ -34,6 +36,7 @@
 
             sampler2D _MainTex;
             float4 _MainTex_ST;
+            int _FlipX;
 
             v2f vert (appdata v)
             {
@@ -47,6 +50,7 @@
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
+                i.uv.x = _FlipX ? 1.0 - i.uv.x : i.uv.x;
                 fixed4 col = saturate(tex2D(_MainTex, i.uv));
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);

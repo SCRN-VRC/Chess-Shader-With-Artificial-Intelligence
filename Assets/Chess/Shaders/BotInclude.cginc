@@ -314,15 +314,15 @@ float eval (uint4 boardTop[2], float lateGame)
         boardScore[i] += getBoardScore(pos - 1, QUEEN, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[QUEEN] : 0.0;
         // Bishop
-        pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
+        pos = int2((buf & 0xf00) >> 8, (buf & 0xf000) >> 12);
         boardScore[i] += getBoardScore(pos - 1, BISHOP, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[BISHOP] : 0.0;
         // Knight
-        pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
+        pos = int2((buf & 0xf0000) >> 16, (buf & 0xf00000) >> 20);
         boardScore[i] += getBoardScore(pos - 1, KNIGHT, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Rooks
-        pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
+        pos = int2((buf & 0xf000000) >> 24, (buf & 0xf0000000) >> 28);
         boardScore[i] += getBoardScore(pos - 1, ROOK, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
     }
@@ -336,15 +336,15 @@ float eval (uint4 boardTop[2], float lateGame)
         boardScore[i] += getBoardScore(pos - 1, ROOK, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[ROOK] : 0.0;
         // Knight
-        pos = int2(buf & 0xf00, (buf & 0xf000) >> 12);
+        pos = int2((buf & 0xf00) >> 8, (buf & 0xf000) >> 12);
         boardScore[i] += getBoardScore(pos - 1, KNIGHT, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KNIGHT] : 0.0;
         // Bishop
-        pos = int2(buf & 0xf0000, (buf & 0xf00000) >> 20);
+        pos = int2((buf & 0xf0000) >> 16, (buf & 0xf00000) >> 20);
         boardScore[i] += getBoardScore(pos - 1, BISHOP, i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[BISHOP] : 0.0;
         // King, 2 scoring tables
-        pos = int2(buf & 0xf000000, (buf & 0xf0000000) >> 28);
+        pos = int2((buf & 0xf000000) >> 24, (buf & 0xf0000000) >> 28);
         boardScore[i] += getBoardScore(pos - 1, (lateGame > 0.0 ? KING + 1 : KING), i);
         pieceScore[i] += (pos.x + pos.y) > 0 ? pieceVal[KING] : 0.0;
     }

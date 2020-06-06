@@ -2,7 +2,10 @@ fileFormatVersion: 2
 guid: ddae6e8d370e0f146be85f557f52b3fd
 ShaderImporter:
   externalObjects: {}
-  defaultTextures: []
+  defaultTextures:
+  - _BufferTex: {fileID: 8400000, guid: bf73458dffc6abe459ea0cd4cfdf7763, type: 2}
+  - _TouchTex: {fileID: 8400000, guid: 4f1a8d48ce3f8a24e920932486af8fb0, type: 2}
+  nonModifiableTextures: []
   userData: 
   assetBundleName: 
   assetBundleVariant: 
