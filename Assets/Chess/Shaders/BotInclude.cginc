@@ -1,7 +1,7 @@
 #ifndef _BOT_INCLUDE
 #define _BOT_INCLUDE
 
-#include "Debugging.cginc"
+//#include "Debugging.cginc"
 
 #define PAWN        1   // 0001
 #define KNIGHT      2   // 0010
@@ -376,9 +376,6 @@ bool clearPath (uint4 boardArray[2], int2 source, int2 dest, uint3 srcColCapPawn
     // Check destination
     uint curPos = getPiece(boardArray, i);
 
-    if (all(source == int2(0, 0)) && all(dest == int2(0, 1)))
-        buffer[0] = float4(1338, curPos, 0, 0);
-
     // If it's a pawn, it can't capture where it moves
     [flatten]
     if (srcColCapPawn.z) {
@@ -748,7 +745,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
 
             uint3 ind2; 
             // Check the spaces between king and rook are empty 
-            ind2.x = dest.x == 5 ? 0xf0 : 0xff00000;    
+            ind2.x = dest.x == 6 ? 0xf0 : 0xff00000;    
             ind2.y = (boardPosArray[ind.z][ind.w] & ind2.x) == 0;
             ind2.z = all(rook == uint2(colP == WHITE ? 0 : 7,
                 dest.x == 6 ? 7 : 0));

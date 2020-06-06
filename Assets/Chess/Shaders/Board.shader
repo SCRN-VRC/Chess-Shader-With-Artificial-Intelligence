@@ -8,7 +8,7 @@
         _Color4 ("Color 4", Color) = (0,0,0,1)
         _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
-        _Pixel ("Pixel Check", Vector) = (0, 0, 0, 0)
+        [HideInInspector]_Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
     }
     SubShader
     {
@@ -24,7 +24,7 @@
 
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
-            #include "Debugging.cginc"
+            //#include "Debugging.cginc"
             #include "Layout.cginc"
 
             struct appdata

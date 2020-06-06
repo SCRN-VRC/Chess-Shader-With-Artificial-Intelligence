@@ -5,6 +5,7 @@ Shader "ChessBot/BoardGen"
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _TouchTex ("Touch Sensor Texture", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.1
+        _Seed ("Random Gen Seed", Float) = 8008
     }
     SubShader
     {
@@ -21,7 +22,7 @@ Shader "ChessBot/BoardGen"
 
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
-            #include "Debugging.cginc"
+            //#include "Debugging.cginc"
             #include "Layout.cginc"
 
             /*
@@ -37,6 +38,7 @@ Shader "ChessBot/BoardGen"
             Texture2D<float4> _TouchTex;
             float4 _TouchTex_TexelSize;
             float _MaxDist;
+            float _Seed;
 
             struct appdata
             {
@@ -161,8 +163,8 @@ Shader "ChessBot/BoardGen"
                 {
                     idx_t -= moveNum[BISHOP].y;
                     // Half of the move-set goes horizontal, half vertical
-                    uint idMod = fmod(idx_t, moveNum[ROOK].x * 0.5);
-                    uint r = moveNum[ROOK].x * 0.25;
+                    uint idMod = idx_t % (moveNum[ROOK].x / 2);
+                    uint r = moveNum[ROOK].x / 4;
                     dest.x = idMod < r ? idMod : src.x ;
                     dest.y = idMod < r ? src.y : idMod - r ;
                 }
@@ -286,7 +288,7 @@ Shader "ChessBot/BoardGen"
                             float score = eval(board, turnWinUpdateLate.w);
                             [flatten]
                             if (score >= evalPrev.x) {
-                                c.xy = score > evalPrev.x ? 0 : c.xy;
+                                c.xy = score > evalPrev.x ? 0..xx : c.xy;
                                 bestBoards[c.x] = int2(i * 2, id * 2);
                                 evalPrev.x = score;
                                 c.x = (c.x + 1) % MAX_KEEP;
@@ -294,7 +296,8 @@ Shader "ChessBot/BoardGen"
                             }
                         }
                         // Pick a "random" board if scores are equal
-                        uint ind = floor(hash11(c.x + c.y) * min(c.y, 10));
+                        uint ind = floor(hash11(id + c.x + c.y + _Seed) * min(c.y, 10));
+
                         evalPrev.yz = bestBoards[ind].xy;
                         // Mark as done
                         evalPrev.w = 1.0;
@@ -309,9 +312,6 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
-                    
-                    //uint4 top[2] = { curBoard[T_LEFT], curBoard[T_RIGHT] };
-                    //buffer[0] = eval(top, turnWinUpdateLate.w);
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -320,10 +320,6 @@ Shader "ChessBot/BoardGen"
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
-                        // curBoard[B_LEFT] = fullTests[1][0];
-                        // curBoard[B_RIGHT] = fullTests[1][1];
-                        // curBoard[T_LEFT] = fullTests[1][2];
-                        // curBoard[T_RIGHT] = fullTests[1][3];
                     }
 
                     // Increment board generation counter
@@ -341,10 +337,10 @@ Shader "ChessBot/BoardGen"
                     buf.x = curBoard[T_LEFT][1];
                     buf.y = curBoard[T_RIGHT][1];
                     buf = (buf >> 24) & 0xff;
-                    moved.x = moved.x || (uint2(buf.x >> 4, buf.x & 0xf) == 
-                        uint2(1, 5) ? false : true);
-                    moved.y = moved.y || (uint2(buf.y >> 4, buf.y & 0xf) == 
-                        uint2(8, 5) ? false : true);
+                    moved.x = moved.x || (all(uint2(buf.x >> 4, buf.x & 0xf) == 
+                        uint2(1, 5)) ? false : true);
+                    moved.y = moved.y || (all(uint2(buf.y >> 4, buf.y & 0xf) == 
+                        uint2(8, 5)) ? false : true);
                     kingMoved.x = moved.x ? 1.0 : 0.0;
                     kingMoved.y = moved.y ? 1.0 : 0.0;
 
@@ -510,8 +506,6 @@ Shader "ChessBot/BoardGen"
                                     pieceID, playerSrcDest.xy, destPos, 1);
                                 curBoard[T_RIGHT] = doMoveNoCheck(pastBoard, T_RIGHT,
                                     pieceID, playerSrcDest.xy, destPos, 1);
-                                
-                                //buffer[0] = float4(pieceID, destPos);
 
                                 // Next turn and reset player
                                 turnWinUpdateLate.x += 1.0;
@@ -540,7 +534,7 @@ Shader "ChessBot/BoardGen"
                     StoreValueFloat(txPlayerPosState, playerPosState, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                 }
-                // Actual board
+                // Generate all possible moves to a depth of 2
                 else if (all(px < int2(boardParams.zw)))
                 {
                     // Stagger the move generation for slower GPUs
