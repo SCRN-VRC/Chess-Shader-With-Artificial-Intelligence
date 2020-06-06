@@ -17,12 +17,14 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 3. I suggest using FinalIK or Rigidbodies to plant the chess board in world space, and the [Inventory System](https://github.com/Xiexe/VRCInventorySystem) to enable/disable the game object.
 
 ## How It Works
+### Chessboard
 <img src="Images/Chessboard.png"/>
 
 * The bottom two pixels contain a bit packed representation of an chessboard as how we would see it. 
 * The top two pixels contain the (y, x) positions of every single piece.
 * The bottom two pixels are only good for moving and capturing pieces, it's fast to check where the piece can go. The top two pixels are good for the AI because it needs to generate an entire tree of moves. If the AI wants to know where the Queen is, it saves time looping through the entire board searching for it.
 
+### Min-max tree
 <img src="Images/MoveGen.png"/>
 
 * The min-max tree is generated through six steps, each with a waiting period of 15ms in between to help reduce GPU stress.
@@ -30,6 +32,7 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * From those 149 boards, the AI generates another 149 for every single one.
 * At the end of the cycle, the path that benefits the computer according to the evaluation function is picked.
 
+### Board evaluation
 <img src="Images/Eval.png"/>
 
 * For the evaluation function I copied from https://www.chessprogramming.org/Simplified_Evaluation_Function with no modifications
