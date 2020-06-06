@@ -8,7 +8,7 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * Castling during a check (too lazy to check)
 * Pawn promotions only works on pieces that are already captured (i.e. If the pawn reaches the end, your queens alive but the rooks dead, the pawn becomes a rook.) This is because there's no room left to store extra information based on how I implemented stuff
 * Depth of 2, this AI's very dumb in the late game
-* Bad board evaluation function, I just copied some numbers off a site
+* ~~Bad board evaluation function, I just copied some numbers off a site~~ (I fixed a big bug so it should work ok now)
 * Lots of wasted space, no dynamic memory allocation in shaders
 
 ## Setup for VRChat (Sorry doesn't work in-game yet, the setups wrong)
@@ -29,6 +29,12 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * The first 149 boards are generated from the current board position, there's a total of 149 moves that can be done per turn.
 * From those 149 boards, the AI generates another 149 for every single one.
 * At the end of the cycle, the path that benefits the CPU according to the evaluation function is picked.
+
+<img src="Images/Eval.png"/>
+
+* For the evaluation function I copied from https://www.chessprogramming.org/Simplified_Evaluation_Function with no modifications
+* Each piece has a different table influencing where to go and a piece value determining its importance. The king has two tables, early game and late game tables to determine how it moves
+* The entire board score is (White position score + white piece score) - (Black position score + black piece score)
 
 #### Thanks to [Merlin](https://github.com/Merlin-san/) and d4rkpl4y3r for fixing my bit packing stuff.
 If you have any question contact me at [@SCRNinVR](https://twitter.com/SCRNinVR) or on Discord, SCRN#8008
