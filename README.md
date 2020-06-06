@@ -31,4 +31,4 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * At the end of the cycle, the path that benefits the CPU according to the evaluation function is picked.
 
 #### Thanks to [Merlin](https://github.com/Merlin-san/) and d4rkpl4y3r for fixing my bit packing stuff.
-#### If you have any question contact me at [@SCRNinVR](https://twitter.com/SCRNinVR) or on Discord, SCRN#8008
+If you have any question contact me at [@SCRNinVR](https://twitter.com/SCRNinVR) or on Discord, SCRN#8008
