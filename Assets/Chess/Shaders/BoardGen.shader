@@ -4,16 +4,22 @@ Shader "ChessBot/BoardGen"
     {
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _TouchTex ("Touch Sensor Texture", 2D) = "black" {}
-        _MaxDist ("Max Distance", Float) = 0.1
+        _MaxDist ("Max Distance", Float) = 0.05
         _Seed ("Random Gen Seed", Float) = 8008
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        Cull Off
+        Tags { "Queue"="Overlay+1" "ForceNoShadowCasting"="True" "IgnoreProjector"="True" }
+        ZWrite Off
+        ZTest Always
+        Cull Front
 
         Pass
         {
+            Lighting Off
+            SeparateSpecular Off
+            Fog { Mode Off }
+            
             CGPROGRAM
 
             #pragma vertex vert
@@ -464,7 +470,7 @@ Shader "ChessBot/BoardGen"
                         {
                             timerLift.y += unity_DeltaTime;
                             playerPosState.w = playerPosState.z < 1.0 &&
-                                timerLift.y > 0.35 ?
+                                timerLift.y > 0.1 ?
                                     PSTATE_DEST : PSTATE_LIFT;
                         }
                         // Accept next input

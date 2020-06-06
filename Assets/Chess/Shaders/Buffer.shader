@@ -3,19 +3,25 @@
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _MaxDist ("Max Distance", Float) = 0.1
+        _MaxDist ("Max Distance", Float) = 0.05
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
-        Cull Off
-        Lighting Off
+        Tags { "Queue"="Overlay+1" "ForceNoShadowCasting"="True" "IgnoreProjector"="True" }
+        ZWrite Off
+        ZTest Always
+        Cull Front
         
         Pass
         {
+            Lighting Off
+            SeparateSpecular Off
+            Fog { Mode Off }
+            
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma fragmentoption ARB_precision_hint_fastest
             #pragma target 5.0
 
             #include "UnityCG.cginc"
@@ -32,6 +38,7 @@
             };
 
             Texture2D<float4> _MainTex;
+            float4 _MainTex_TexelSize;
             float _MaxDist;
 
             v2f vert (appdata v)
@@ -52,7 +59,7 @@
             {
                 clip(i.uv.z);
                 // sample the texture
-                float4 col = _MainTex.Load(int3(i.uv.xy * _ScreenParams, 0));
+                float4 col = _MainTex.Load(int3(i.uv.xy * _MainTex_TexelSize.zw, 0));
                 return col;
             }
             ENDCG
