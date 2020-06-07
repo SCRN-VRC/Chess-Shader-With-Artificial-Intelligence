@@ -35,7 +35,7 @@ Shader "ChessBot/BoardGen"
 
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
-            #include "Debugging.cginc"
+            //#include "Debugging.cginc"
             #include "Layout.cginc"
 
             /*
@@ -265,21 +265,23 @@ Shader "ChessBot/BoardGen"
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
                 float4 drawResignNewReset = LoadValueFloat(_BufferTex, txDrawResignNewReset);
+                float4 buttonPos = LoadValueFloat(_BufferTex, txButtonPos);
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0 ||
                     drawResignNewReset.z > 0.0 ||
-                    drawResignNewReset.w > 0.0)
+                    (drawResignNewReset.w > 0.0 && buttonPos.z < 1.0))
                 {
                     turnWinUpdateLate = float4(1.0, -1.0, 6.0, 0.0);
                     kingMoved = 0.0;
                     // I want to randomize the next game unless it's a full reset
                     timerLiftSeed = float4(0.0, 0.0,
                         drawResignNewReset.z > 0.0 ?
-                            hash11(timerLiftSeed.z) : _Seed, 0.0);
+                            (hash11(timerLiftSeed.z) * _Seed) : _Seed, 0.0);
                     playerSrcDest = -1.0;
                     playerPosState = float4(-1..xx, 0..xx);
                     drawResignNewReset = 0.0;
+                    buttonPos = 0.0;
                 }
 
                 [branch]
@@ -351,6 +353,8 @@ Shader "ChessBot/BoardGen"
                     // x is flipped
                     buttonPosCount.x = 1.0 - buttonPosCount.x;
 
+                    buttonPos.xyz = buttonPosCount;
+
                     // Offer draw
                     drawResignNewReset.x = buttonPosCount.z > 0.0 &&
                         all(int2(buttonPosCount.xy) == int2(0, 1)) ? 1.0 : 0.0;
@@ -359,12 +363,10 @@ Shader "ChessBot/BoardGen"
                         all(int2(buttonPosCount.xy) == int2(1, 1)) ? 1.0 : 0.0;
                     // New game
                     drawResignNewReset.z = buttonPosCount.z > 0.0 &&
-                        all(int2(buttonPosCount.xy) == int2(0, 0)) ?
-                            1.0 : drawResignNewReset.z;
+                        all(int2(buttonPosCount.xy) == int2(0, 0)) ? 1.0 : drawResignNewReset.z;
                     // Reset
                     drawResignNewReset.w = buttonPosCount.z > 0.0 &&
-                        all(int2(buttonPosCount.xy) == int2(1, 1)) ?
-                            1.0 : drawResignNewReset.w;
+                        all(int2(buttonPosCount.xy) == int2(1, 0)) ? 1.0 : drawResignNewReset.w;
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -373,6 +375,18 @@ Shader "ChessBot/BoardGen"
                         curBoard[B_RIGHT] = newBoard(B_RIGHT);
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
+                    }
+
+                    // If player resigned computer wins
+                    turnWinUpdateLate.y = drawResignNewReset.y > 0.0 ?
+                        BLACK : turnWinUpdateLate.y;
+
+                    // Only accept draw if it's losing
+                    if (drawResignNewReset.x > 0.0)
+                    {
+                        uint4 boardTop[2] = { curBoard[T_LEFT], curBoard[T_RIGHT] };
+                        float score = eval(boardTop, turnWinUpdateLate.w);
+                        turnWinUpdateLate.y = score > 0.0 ? DRAW_ACCEPT : DRAW_DECLINE;
                     }
 
                     // Increment board generation counter
@@ -423,9 +437,9 @@ Shader "ChessBot/BoardGen"
                     // Minor piece only
                     int c = 0;
                     [unroll]
-                    for (int i = 0; i <= 24; i += 8) {
+                    for (int j = 0; j <= 24; j += 8) {
                         // There is a piece, position does not matter
-                        uint4 bt = ((buf >> i) & 0xff);
+                        uint4 bt = ((buf >> j) & 0xff);
                         c = bt.x > 0 ? c + 1 : c;
                         c = bt.y > 0 ? c + 1 : c;
                         c = bt.z > 0 ? c + 1 : c;
@@ -586,6 +600,7 @@ Shader "ChessBot/BoardGen"
                     StoreValueFloat(txPlayerPosState, playerPosState, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                     StoreValueFloat(txDrawResignNewReset, drawResignNewReset, col, px);
+                    StoreValueFloat(txButtonPos, buttonPos, col, px);
                 }
                 // Generate all possible moves to a depth of 2
                 else if (all(px < int2(boardParams.zw)))

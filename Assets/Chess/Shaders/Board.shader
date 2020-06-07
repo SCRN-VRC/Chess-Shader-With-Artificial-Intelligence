@@ -2,10 +2,10 @@
 {
     Properties
     {
-        _Color1 ("Color 1", Color) = (1,1,1,1)
-        _Color2 ("Color 2", Color) = (0,0,0,1)
-        _Color3 ("Color 3", Color) = (1,1,1,1)
-        _Color4 ("Color 4", Color) = (0,0,0,1)
+        _Color1 ("Board Color 1", Color) = (1,1,1,1)
+        _Color2 ("Board Color 2", Color) = (0,0,0,1)
+        _Color3 ("Piece Color 1", Color) = (1,1,1,1)
+        _Color4 ("Piece Color 2", Color) = (0,0,0,1)
         _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         [HideInInspector]_Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
