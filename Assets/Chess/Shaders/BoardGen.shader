@@ -1,9 +1,16 @@
+/*
+    TODO LIST:
+    - I think the AI can't castle, I'll have to check in detail
+    - The AI still throws away free pieces, check bishop moves
+*/
+
 Shader "ChessBot/BoardGen"
 {
     Properties
     {
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _TouchTex ("Touch Sensor Texture", 2D) = "black" {}
+        _ButtonTex ("Button Sensor Texture", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.05
         _Seed ("Random Gen Seed", Float) = 8008
     }
@@ -28,7 +35,7 @@ Shader "ChessBot/BoardGen"
 
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
-            //#include "Debugging.cginc"
+            #include "Debugging.cginc"
             #include "Layout.cginc"
 
             /*
@@ -42,7 +49,7 @@ Shader "ChessBot/BoardGen"
 
             Texture2D<float4> _BufferTex;
             Texture2D<float4> _TouchTex;
-            float4 _TouchTex_TexelSize;
+            Texture2D<float4> _ButtonTex;
             float _MaxDist;
             float _Seed;
 
@@ -231,15 +238,15 @@ Shader "ChessBot/BoardGen"
                 uint4 col = asuint(_BufferTex.Load(int3(px, 0)));
 
                 // 15 FPS
-                float4 timerLift = LoadValueFloat(_BufferTex, txTimerLift);
-                timerLift.x += unity_DeltaTime;
+                float4 timerLiftSeed = LoadValueFloat(_BufferTex, txTimerLiftSeed);
+                timerLiftSeed.x += unity_DeltaTime;
 
-                if (timerLift.x < 0.06667)
+                if (timerLiftSeed.x < 0.06667)
                 {
-                    StoreValueFloat(txTimerLift, timerLift, col, px);
+                    StoreValueFloat(txTimerLiftSeed, timerLiftSeed, col, px);
                     return col;
                 }
-                else timerLift.x = 0.0;
+                else timerLiftSeed.x = 0.0;
 
                 // UVs of set of boards generated per board
                 float2 boardsUV = fmod(px, boardParams.xy) / boardParams.xy;
@@ -257,14 +264,22 @@ Shader "ChessBot/BoardGen"
                 float4 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
+                float4 drawResignNewReset = LoadValueFloat(_BufferTex, txDrawResignNewReset);
 
                 // Initialize the shaduuurrr
-                if (_Time.y < 1.0) {
-                    turnWinUpdateLate.xyzw = float4(1.0, -1.0, 6.0, 0.0);
-                    kingMoved.xyzw = 0.0;
-                    timerLift.xyzw = 0.0;
+                if (_Time.y < 1.0 ||
+                    drawResignNewReset.z > 0.0 ||
+                    drawResignNewReset.w > 0.0)
+                {
+                    turnWinUpdateLate = float4(1.0, -1.0, 6.0, 0.0);
+                    kingMoved = 0.0;
+                    // I want to randomize the next game unless it's a full reset
+                    timerLiftSeed = float4(0.0, 0.0,
+                        drawResignNewReset.z > 0.0 ?
+                            hash11(timerLiftSeed.z) : _Seed, 0.0);
                     playerSrcDest = -1.0;
-                    playerPosState.xyzw = float4(-1..xx, 0..xx);
+                    playerPosState = float4(-1..xx, 0..xx);
+                    drawResignNewReset = 0.0;
                 }
 
                 [branch]
@@ -318,6 +333,38 @@ Shader "ChessBot/BoardGen"
                     curBoard[B_RIGHT] = LoadValueUint(_BufferTex, txCurBoardBR);
                     curBoard[T_LEFT] =  LoadValueUint(_BufferTex, txCurBoardTL);
                     curBoard[T_RIGHT] = LoadValueUint(_BufferTex, txCurBoardTR);
+
+                    // Offer draw, resign, etc buttons
+                    float3 buttonPosCount = 0.0;
+                    [unroll]
+                    for (int i = 0; i < 6; i++) {
+                        [unroll]
+                        for (int j = 0; j < 6; j++) {
+                            float d = _ButtonTex.Load(int3(i, j, 0)).r;
+                            buttonPosCount.xy += d > 0.0 ? float2(i, j) : 0..xx;
+                            buttonPosCount.z += d > 0.0 ? 1.0 : 0.0;
+                        }
+                    }
+                    buttonPosCount.xy = floor(buttonPosCount.xy /
+                        max(buttonPosCount.z, 1.) * 0.3333 + .3333);
+
+                    // x is flipped
+                    buttonPosCount.x = 1.0 - buttonPosCount.x;
+
+                    // Offer draw
+                    drawResignNewReset.x = buttonPosCount.z > 0.0 &&
+                        all(int2(buttonPosCount.xy) == int2(0, 1)) ? 1.0 : 0.0;
+                    // Resign
+                    drawResignNewReset.y = buttonPosCount.z > 0.0 &&
+                        all(int2(buttonPosCount.xy) == int2(1, 1)) ? 1.0 : 0.0;
+                    // New game
+                    drawResignNewReset.z = buttonPosCount.z > 0.0 &&
+                        all(int2(buttonPosCount.xy) == int2(0, 0)) ?
+                            1.0 : drawResignNewReset.z;
+                    // Reset
+                    drawResignNewReset.w = buttonPosCount.z > 0.0 &&
+                        all(int2(buttonPosCount.xy) == int2(1, 1)) ?
+                            1.0 : drawResignNewReset.w;
 
                     // New board
                     if (floor(turnWinUpdateLate.x) == 1)
@@ -462,15 +509,15 @@ Shader "ChessBot/BoardGen"
 
                                 playerSrcDest.xy = srcPos;
                                 playerPosState.w = PSTATE_LIFT;
-                                timerLift.y = 0.0;
+                                timerLiftSeed.y = 0.0;
                             }
                         }
                         // Wait for nothing touching
                         else if (playerPosState.w == PSTATE_LIFT)
                         {
-                            timerLift.y += unity_DeltaTime;
+                            timerLiftSeed.y += unity_DeltaTime;
                             playerPosState.w = playerPosState.z < 1.0 &&
-                                timerLift.y > 0.1 ?
+                                timerLiftSeed.y > 0.1 ?
                                     PSTATE_DEST : PSTATE_LIFT;
                         }
                         // Accept next input
@@ -481,8 +528,7 @@ Shader "ChessBot/BoardGen"
                             uint4 board[2] = { curBoard[B_LEFT], curBoard[B_RIGHT] };
                             // Make player move
                             [branch]
-                            if (destPos.x > -1 &&
-                                validMove(board, playerSrcDest.xy, destPos, kingMoved))
+                            if (validMove(board, playerSrcDest.xy, destPos, kingMoved))
                             {
                                 // Find the ID
                                 uint2 pieceID = 0;
@@ -535,10 +581,11 @@ Shader "ChessBot/BoardGen"
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
                     StoreValueUint(txCurBoardTR, curBoard[T_RIGHT], col, px);
                     StoreValueFloat(txKingMoved, kingMoved, col, px);
-                    StoreValueFloat(txTimerLift, timerLift, col, px);
+                    StoreValueFloat(txTimerLiftSeed, timerLiftSeed, col, px);
                     StoreValueFloat(txPlayerSrcDest, playerSrcDest, col, px);
                     StoreValueFloat(txPlayerPosState, playerPosState, col, px);
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
+                    StoreValueFloat(txDrawResignNewReset, drawResignNewReset, col, px);
                 }
                 // Generate all possible moves to a depth of 2
                 else if (all(px < int2(boardParams.zw)))

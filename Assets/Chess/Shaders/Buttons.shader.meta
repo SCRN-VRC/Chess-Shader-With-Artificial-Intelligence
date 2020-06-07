@@ -1,11 +1,11 @@
 fileFormatVersion: 2
-guid: ddae6e8d370e0f146be85f557f52b3fd
+guid: c8b515f17ad091e4a94e1eaf5abe8796
 ShaderImporter:
   externalObjects: {}
   defaultTextures:
+  - _MainTex: {fileID: 2800000, guid: 0ee77de668a1de54f92c0a6fe319f457, type: 3}
+  - _StatusTex: {fileID: 2800000, guid: e3ce53d25dee8aa4684e34286cf3d68f, type: 3}
   - _BufferTex: {fileID: 8400000, guid: bf73458dffc6abe459ea0cd4cfdf7763, type: 2}
-  - _TouchTex: {fileID: 8400000, guid: 4f1a8d48ce3f8a24e920932486af8fb0, type: 2}
-  - _ButtonTex: {fileID: 8400000, guid: 3864d75f551993d469f39b69c83689b9, type: 2}
   nonModifiableTextures: []
   userData: 
   assetBundleName: 

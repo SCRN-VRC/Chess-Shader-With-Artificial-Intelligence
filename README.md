@@ -7,9 +7,9 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * No en croissant (too lazy to implement)
 * Castling during a check (too lazy to check)
 * Pawn promotions only works on pieces that are already captured (i.e. If the pawn reaches the end, your queens alive but the rooks dead, the pawn becomes a rook.) This is because there's no room left to store extra information based on how I implemented stuff
-* Depth of 2, this AI's very dumb in the late game
+* Depth of 2, this AI's big dumb in the late game
 * ~~Bad board evaluation function, I just copied some numbers off a site~~ (I fixed a big bug so it should work ok now)
-* Lots of wasted space, no dynamic memory allocation in shaders
+* Lots of wasted space, no dynamic memory allocation in shadurs
 
 ## Setup for VRChat (Sorry doesn't work in-game yet, the setups wrong)
 1. Import the ChessShaderWithAI.unitypackage
