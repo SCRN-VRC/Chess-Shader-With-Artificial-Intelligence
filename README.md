@@ -35,7 +35,7 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 ### Board evaluation
 <img src="Images/Eval.png"/>
 
-* For the evaluation function I copied from https://www.chessprogramming.org/Simplified_Evaluation_Function with no modifications
+* For the evaluation function I copied from https://www.chessprogramming.org/Simplified_Evaluation_Function with minor modifications
 * Each piece has a different table influencing where to go and a piece value determining its importance. The king has two tables, early game and late game tables to determine how it moves
 * The entire board score is (White position score + white piece score) - (Black position score + black piece score)
 
