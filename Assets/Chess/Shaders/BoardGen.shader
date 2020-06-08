@@ -1,7 +1,6 @@
 /*
     TODO LIST:
-    - I think the AI can't castle, I'll have to check in detail
-    - The AI still throws away free pieces, check bishop moves
+    - None! :)
 */
 
 Shader "ChessBot/BoardGen"
@@ -41,10 +40,10 @@ Shader "ChessBot/BoardGen"
             /*
                 Max moves per piece
                 Piece  Rq  Rk  Nq  Nk  Bq  Bk  Q   K  P
-                Moves  16  16  8   8   15  15  31  8  32  =  149 possible moves
+                Moves  16  16  8   8   15  15  31  10  32  =  151 possible moves
 
-                Every board generates 149 boards, one board is 2x2 pixels
-                298 x 2 pixels generated per board
+                Every board generates 151 boards, one board is 2x2 pixels
+                302 x 2 pixels generated per board
             */
 
             Texture2D<float4> _BufferTex;
@@ -269,8 +268,8 @@ Shader "ChessBot/BoardGen"
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0 ||
-                    drawResignNewReset.z > 0.0 ||
-                    (drawResignNewReset.w > 0.0 && buttonPos.z < 1.0))
+                    drawResignNewReset.w > 0.0 ||
+                    (drawResignNewReset.z > 0.0 && buttonPos.z < 1.0))
                 {
                     turnWinUpdateLate = float4(1.0, -1.0, 6.0, 0.0);
                     kingMoved = 0.0;
@@ -319,7 +318,8 @@ Shader "ChessBot/BoardGen"
                             }
                         }
                         // Pick a "random" board if scores are equal
-                        uint ind = floor(hash11(id + c.x + c.y + _Seed) * min(c.y, 10));
+                        uint ind = floor(hash11(id + c.x + c.y + timerLiftSeed.z)
+                            * min(c.y, MAX_KEEP));
 
                         evalPrev.yz = bestBoards[ind].xy;
                         // Mark as done
@@ -376,6 +376,18 @@ Shader "ChessBot/BoardGen"
                         curBoard[T_LEFT] = newBoard(T_LEFT);
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
+
+                    // // Debug Stuff
+                    // {
+                    //     int2 pos = int2(floor(fmod(_Time.y * 4, 151)) * 2, floor(fmod(_Time.y * 4, 151)) * 2 + 1);
+                    //     //int2 pos = int2(34, 35);
+                    //     uint4 boardTop[2] = {
+                    //         asuint(_BufferTex.Load(int3(pos.x, 231, 0))),
+                    //         asuint(_BufferTex.Load(int3(pos.y, 231, 0)))
+                    //     };
+                    //     float score = eval(boardTop, turnWinUpdateLate.w);
+                    //     buffer[0] = float4(score, pos.x, 231, 0);
+                    // }
 
                     // If player resigned computer wins
                     turnWinUpdateLate.y = drawResignNewReset.y > 0.0 ?
@@ -458,7 +470,10 @@ Shader "ChessBot/BoardGen"
                     {
                         // Pick best move for computer (black)
                         int2 bestMove = -1;
-                        float bestScore = FLT_MAX;
+                        float bestScore = FLT_MAX; // Minimize this
+                        // int c = 0;
+                        // float scoreTest[4] = {0,0,0,0};
+
                         [unroll]
                         for (int i = txEvalArea.x; i <= txEvalArea.z; i++) {
                             float4 eOut = asfloat(_BufferTex.Load(int3(i, txEvalArea.y, 0)));

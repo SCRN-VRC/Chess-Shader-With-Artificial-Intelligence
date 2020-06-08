@@ -34,7 +34,7 @@ static const uint kMask = 0x7;
 
 static const float pieceVal[7] =
 {
-    0, 100, 320, 330, 500, 900, 20000
+    0, 100, 320, 330, 500, 1100, 2000000
 };
 
 // Piece ID to Search Array Index
@@ -120,7 +120,7 @@ static const float pcTbl[8][8][8] =
      5,  5, 10, 25, 25, 10,  5,  5,
      0,  0,  0, 20, 20,  0,  0,  0,
      5, -5,-10,  0,  0,-10, -5,  5,
-     5, 10, 10,-20,-20, 10, 10,  5,
+     5, 10, 10,-30,-30, 10, 10,  5,
      0,  0,  0,  0,  0,  0,  0,  0,
 
      // knight
@@ -196,8 +196,8 @@ static const int2 pawnListW[4] = { -1, 1, 1, 1, 0, 1, 0, 2 };
 static const int2 pawnListB[4] = { -1, -1, 1, -1, 0, -1, 0, -2 };
 static const int2 knightList[8] = { -1, 2, -2, 1, -2, -1, -1, -2, 1,
     -2, 2, -1, 2, 1, 1, 2 };
-static const int2 kingList[8] = { 0, 1, 1, 1, 1, 0, 1, -1,
-    0, -1, -1, -1, -1, 0, -1, 1 };
+static const int2 kingList[10] = { 0, 1, 1, 1, 1, 0, 1, -1,
+    0, -1, -1, -1, -1, 0, -1, 1, -2, 0, 2, 0 };
 
 // Board info stored in 2x2
 uint4 newBoard (uint posID)

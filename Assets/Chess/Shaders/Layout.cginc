@@ -12,7 +12,7 @@
 #define txPlayerPosState                int2(6, 511)
 #define txDrawResignNewReset            int2(7, 511)
 #define txButtonPos                     int2(8, 511)
-#define txEvalArea                      int4(362, 511, 511, 511)
+#define txEvalArea                      int4(360, 511, 511, 511)
 
 // States for extracting touch input
 #define PSTATE_SRC         0
@@ -24,10 +24,10 @@
 
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined
-#define boardParams        float4(298, 2, 298, 300)
+#define boardParams        float4(302, 2, 302, 304)
 
 // Number of rows we update each frame
-static const int boardDiv = floor(boardParams.x / 5.0);
+static const int boardDiv = 62;
 
 // Index of texture area to update per frame
 static const int boardUpdate[7] = 
@@ -51,7 +51,7 @@ static const uint2 moveNum[7] =
     30,         78,     // Bishops
     32,         110,    // Rooks
     31,         141,    // Queen
-    8,          149     // King
+    10,         151     // King
 };
 
 inline uint4 LoadValueUint( in Texture2D<float4> tex, in int2 re )

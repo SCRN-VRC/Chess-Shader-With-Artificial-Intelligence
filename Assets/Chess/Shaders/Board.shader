@@ -8,7 +8,7 @@
         _Color4 ("Piece Color 2", Color) = (0,0,0,1)
         _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
-        [HideInInspector]_Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
+        _Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
     }
     SubShader
     {
@@ -67,8 +67,8 @@
                     LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0)) };
 
                 // uint4 fullBoard[4] = {
-                //     fullTests[1][0], fullTests[1][1],
-                //     fullTests[1][2], fullTests[1][3]
+                //     fullTests[2][0], fullTests[2][1],
+                //     fullTests[2][2], fullTests[2][3]
                 // };
                 // uint4 board[2] = { fullBoard[0], fullBoard[1] };
 
