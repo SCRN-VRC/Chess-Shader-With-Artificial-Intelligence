@@ -1,4 +1,4 @@
-# IT'S NOT DOOOOOOOONE ~~(The AI and all the logic works, I'm just working on a beautiful 3D chess set for this)~~ (NVM There's some huge bugs I need to fix)
+# IT'S NOT DOOOOOOOONE (The AI and all the logic works, I'm just working on a beautiful 3D chess set for this)
 # Chess Shader with AI
 <img src="Images/Preview.png"/>
 A simple AI implemented using the classic minimax algorithm except it's on a GPU.
@@ -28,8 +28,8 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 <img src="Images/MoveGen.png"/>
 
 * The min-max tree is generated through six steps, each with a waiting period of 15ms in between to help reduce GPU stress.
-* The first 149 boards are generated from the current board position, there's a total of 149 moves that can be done per turn.
-* From those 149 boards, the AI generates another 149 for every single one.
+* The first 151 boards are generated from the current board position, there's a total of 151 moves that can be done per turn.
+* From those 151 boards, the AI generates another 151 for every single one.
 * At the end of the cycle, the path that benefits the computer according to the evaluation function is picked.
 
 ### Board evaluation
