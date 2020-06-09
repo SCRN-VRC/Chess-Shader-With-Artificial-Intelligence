@@ -1,4 +1,4 @@
-﻿Shader "Unlit/Output"
+﻿Shader "ChessBot/Output"
 {
     Properties
     {
