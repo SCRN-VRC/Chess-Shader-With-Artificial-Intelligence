@@ -1,4 +1,3 @@
-# IT'S NOT DOOOOOOOONE (The AI and all the logic works, I'm just working on a beautiful 3D chess set for this)
 # Chess Shader with AI
 <img src="Images/Preview.png"/>
 A simple AI implemented using the classic minimax algorithm except it's on a GPU.

@@ -6,7 +6,7 @@
         _Color2 ("Color 2", Color) = (0, 0, 0, 1)
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _Cube ("Reflection Cubemap", Cube) = "_Skybox" {}
-        _CubeAmout ("Cubemap Amount", Range(0.0, 1.0)) = 0.1
+        _CubeAmount ("Cubemap Amount", Range(0.0, 1.0)) = 0.1
         _BumpMap ("BumpMap", 2D) = "bump" {}
         _Roughness ("Roughness", Range(0.0, 10.0)) = 0.0
         _RimPower ("Rim Power", Range(0.01, 3.0)) = 0.05
@@ -31,7 +31,7 @@
             #include "UnityCG.cginc"
             #include "BotInclude.cginc"
             #include "Layout.cginc"
-            #include "Debugging.cginc"
+            //#include "Debugging.cginc"
 
             struct appdata
             {
@@ -56,12 +56,13 @@
             sampler2D _BumpMap;
             samplerCUBE _Cube;
 
+            float4 _ChessGrabPass_TexelSize;
             float4 _Color1;
             float4 _Color2;
             float _Roughness;
             float _RimPower;
             float _GrabPassAmount;
-            float _CubeAmout;
+            float _CubeAmount;
             //float4 _Test;
 
             // Offset to 0, 0 of the board
@@ -105,7 +106,6 @@
                     0 : (offset + float2(-12.33, 12.33) * pos);
             }
 
-            // -12.33
             v2f vert (appdata v)
             {
                 v2f o;
@@ -141,13 +141,13 @@
                 // Normal map for the grab pass
                 float3 bump = UnpackNormal(tex2D(_BumpMap, i.uv));
                 bump = ( -0.06 - bump ) * 0.09;
-                float4 grab = tex2Dproj(_ChessGrabPass, UNITY_PROJ_COORD(i.screenPos +
+                float4 grab = tex2Dproj(_ChessGrabPass, (i.screenPos / i.screenPos.w +
                     float4(bump.r, bump.g, 0, 1.0 - rim)));
 
-                grab.rgb = HueShift(grab.rgb, powRim);
+                grab.rgb = HueShift(grab.rgb, powRim * 2.5);
                 return min((float4(skyColor, 1.0) * (1.0 - _GrabPassAmount) +
                     _GrabPassAmount * grab) * col + col * (powRim) +
-                    (reflcol * reflcol * _CubeAmout) * rim, 1.5);
+                    (reflcol * reflcol * _CubeAmount) * rim, 1.5);
             }
             ENDCG
         }
