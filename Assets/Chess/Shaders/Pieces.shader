@@ -9,8 +9,9 @@
         _CubeAmout ("Cubemap Amount", Range(0.0, 1.0)) = 0.1
         _BumpMap ("BumpMap", 2D) = "bump" {}
         _Roughness ("Roughness", Range(0.0, 10.0)) = 0.0
-        _RimPower ("Rim Power", Range(0.05, 3.0)) = 0.05
+        _RimPower ("Rim Power", Range(0.01, 3.0)) = 0.05
         _GrabPassAmount ("GrabPass Amount", Range(0.0, 1.0)) = 0.5
+        //_Test ("test", Vector) = (0, 0, 0, 0)
     }
     SubShader
     {
@@ -25,8 +26,12 @@
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
+            #pragma target 5.0
 
             #include "UnityCG.cginc"
+            #include "BotInclude.cginc"
+            #include "Layout.cginc"
+            #include "Debugging.cginc"
 
             struct appdata
             {
@@ -57,14 +62,56 @@
             float _RimPower;
             float _GrabPassAmount;
             float _CubeAmout;
+            //float4 _Test;
 
-            // -12.4
+            // Offset to 0, 0 of the board
+            // x, y is White and z, w is Black
+            static const float4 pcTable[16] =
+            {
+                86.2, 38.3, 86.2, -124.9,
+                74.7, 38.5, 74.3, -125.0,
+                61.7, 38.3, 61.7, -124.8,
+                49.3, 38.5, 49.3, -125.0,
+                37.0, 38.3, 37.0, -124.8,
+                24.8, 38.3, 24.8, -124.9,
+                13.1, 38.6, 12.7, -125.1,
+                0.4,  38.4, 0.4,  -124.9,
+                86.4, 26.1, 86.4, -112.8,
+                74.2, 26.1, 74.2, -112.9,
+                61.9, 26.2, 61.9, -112.7,
+                49.5, 26.2, 49.6, -112.8,
+                37.3, 26.1, 37.3, -112.8,
+                25.0, 26.2, 25.0, -112.7,
+                12.7, 26.2, 12.7, -112.7,
+                0.4,  26.2, 0.4,  -112.7
+            };
+
+            // The piece IDs are baked into the UV positions
+            void movePiece (inout float4 vertex, in int2 uvID)
+            {
+                bool isBlack = uvID.y > 3;
+                int id = uvID.x + (isBlack ? 1 - (uvID.y - 6) : uvID.y) * 8;
+                uint4 board[2] = { LoadValueUint(_BufferTex, txCurBoardTL),
+                    LoadValueUint(_BufferTex, txCurBoardTR) };
+
+                // We use the IDs to figure out where the position is
+                uint shift = pID[id] - (floor(pID[id] / 100) * 100);
+                uint buff = (((isBlack ? board[1] : board[0])[floor(pID[id] / 100)])
+                    >> shift) & 0xff;
+
+                int2 pos = int2(buff >> 4, buff & 0xf) - 1;
+                float2 offset = isBlack ? pcTable[id].zw : pcTable[id].xy;
+                vertex.xz += (any(pos < 0)) ?
+                    0 : (offset + float2(-12.33, 12.33) * pos);
+            }
+
+            // -12.33
             v2f vert (appdata v)
             {
                 v2f o;
                 o.uv = v.uv;
 
-
+                movePiece(v.vertex, floor(v.uv2 * 8.0));
 
                 o.vertex = UnityObjectToClipPos(v.vertex);
                 o.screenPos = ComputeGrabScreenPos(o.vertex);
@@ -78,22 +125,28 @@
             {
                 float4 col = i.pieceCol;
 
+                // Skybox
                 float3 worldViewDir = normalize(UnityWorldSpaceViewDir(i.worldPos));
                 float3 reflection = reflect(-worldViewDir, i.worldNormal);
                 float4 skyData = UNITY_SAMPLE_TEXCUBE_LOD(unity_SpecCube0, reflection, _Roughness);
                 float3 skyColor = DecodeHDR (skyData, unity_SpecCube0_HDR);
                 
+                // Cubemap
                 float4 reflcol = texCUBE (_Cube, reflection);
 
                 float orim = dot(worldViewDir, i.worldNormal);
                 float rim = saturate(pow(orim, _RimPower));
+                float powRim = pow(1 - orim, 3);
+
+                // Normal map for the grab pass
                 float3 bump = UnpackNormal(tex2D(_BumpMap, i.uv));
                 bump = ( -0.06 - bump ) * 0.09;
                 float4 grab = tex2Dproj(_ChessGrabPass, UNITY_PROJ_COORD(i.screenPos +
                     float4(bump.r, bump.g, 0, 1.0 - rim)));
 
+                grab.rgb = HueShift(grab.rgb, powRim);
                 return min((float4(skyColor, 1.0) * (1.0 - _GrabPassAmount) +
-                    _GrabPassAmount * grab) * col + col * (pow(1.0 - orim, 2) / 1.2) +
+                    _GrabPassAmount * grab) * col + col * (powRim) +
                     (reflcol * reflcol * _CubeAmout) * rim, 1.5);
             }
             ENDCG

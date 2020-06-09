@@ -175,11 +175,11 @@
 
                 // buffer[0] = (nextBoard[3][2] & 0xff);
 
-                uint curPos = getPiece(board, uv_id);
+                // uint curPos = getPiece(board, uv_id);
 
-                float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
-                float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
-                pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
+                // float2 piecePos = 0.14286 * float2((curPos & kMask), (curPos >> 3));
+                // float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
+                // pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
                 col = lerp(col, _Color5, playerPosState.x > -1 && all(uint2(playerPosState.xy) == uv_id));
@@ -191,7 +191,7 @@
                 bool clear = validMove(board, playerSrcDest.xy, uv_id, kingMoved);
                 col = lerp(col, _Color6, clear);
 
-                col = lerp(col, pc, pc.a);
+                // col = lerp(col, pc, pc.a);
 
                 return col;
             }

@@ -87,4 +87,14 @@ float hash11(float p)
     return frac(p);
 }
 
+float4 HueShift (in float3 Color, in float Shift)
+{
+    float3 P = float3(0.55735, 0.55735, 0.55735)*
+        dot(float3(0.55735,0.55735,0.55735),Color);
+    float3 U = Color-P;
+    float3 V = cross(float3(0.55735,0.55735,0.55735),U);    
+    Color = U*cos(Shift*6.2832) + V*sin(Shift*6.2832) + P;
+    return float4(Color,1.0);
+}
+
 #endif
