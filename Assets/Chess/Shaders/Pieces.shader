@@ -29,6 +29,7 @@
             #pragma target 5.0
 
             #include "UnityCG.cginc"
+            #include "UnityLightingCommon.cginc"
             #include "ChessInclude.cginc"
             #include "Layout.cginc"
             //#include "Debugging.cginc"
@@ -142,11 +143,34 @@
                 bump = ( -0.06 - bump ) * 0.09;
                 float4 grab = tex2Dproj(_ChessGrabPass, (i.screenPos / i.screenPos.w +
                     float4(bump.r, bump.g, 0, 1.0 - rim)));
-
                 grab.rgb = HueShift(grab.rgb, powRim * 2.5);
-                return min((float4(skyColor, 1.0) * (1.0 - _GrabPassAmount) +
+
+                //Lighting
+                float3 lightDirection;
+                float atten;
+
+                //Directional light
+                if(_WorldSpaceLightPos0.w == 0.0)
+                {
+                    atten = 1.0;
+                    lightDirection = normalize(_WorldSpaceLightPos0.xyz);
+                }
+                else
+                {
+                    float3 fragmentToLightSource = _WorldSpaceLightPos0.xyz - i.worldPos.xyz;
+                    float dist = length(fragmentToLightSource);
+                    atten = 1.0/dist;
+                    lightDirection = normalize(fragmentToLightSource);
+                }
+
+                float3 diffuseReflection = atten * _LightColor0.xyz;
+
+                float4 lightFinal = float4(pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
+                    diffuseReflection, 0.5), 1.0);
+
+                return min(((float4(skyColor, 1.0) * (1.0 - _GrabPassAmount) +
                     _GrabPassAmount * grab) * col + col * (powRim) +
-                    (reflcol * reflcol * _CubeAmount) * rim, 1.5);
+                    (reflcol * reflcol * _CubeAmount) * rim) * lightFinal, 1.4);
             }
             ENDCG
         }

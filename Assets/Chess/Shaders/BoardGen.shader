@@ -11,7 +11,7 @@ Shader "ChessBot/BoardGen"
         _TouchTex ("Touch Sensor Texture", 2D) = "black" {}
         _ButtonTex ("Button Sensor Texture", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.05
-        _Seed ("Random Gen Seed", Float) = 8008
+        _Seed ("Random Gen Seed", Float) = 80085
     }
     SubShader
     {
@@ -116,7 +116,7 @@ Shader "ChessBot/BoardGen"
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0 ||
-                    drawResignNewReset.w > 0.0 ||
+                    (drawResignNewReset.w > 0.0 && buttonPos.z < 1.0) ||
                     (drawResignNewReset.z > 0.0 && buttonPos.z < 1.0))
                 {
                     turnWinUpdateLate = float4(1.0, -1.0, 6.0, 0.0);
