@@ -111,6 +111,7 @@
                 v2f o;
                 o.uv = v.uv;
 
+                // Vertex IDs are baked into the second UV map
                 movePiece(v.vertex, floor(v.uv2 * 8.0));
 
                 o.vertex = UnityObjectToClipPos(v.vertex);
@@ -145,22 +146,20 @@
                     float4(bump.r, bump.g, 0, 1.0 - rim)));
                 grab.rgb = HueShift(grab.rgb, powRim * 2.5);
 
-                //Lighting
+                // Lighting
                 float3 lightDirection;
                 float atten;
 
-                //Directional light
+                // Directional light
                 if(_WorldSpaceLightPos0.w == 0.0)
                 {
                     atten = 1.0;
-                    lightDirection = normalize(_WorldSpaceLightPos0.xyz);
                 }
                 else
                 {
                     float3 fragmentToLightSource = _WorldSpaceLightPos0.xyz - i.worldPos.xyz;
                     float dist = length(fragmentToLightSource);
                     atten = 1.0/dist;
-                    lightDirection = normalize(fragmentToLightSource);
                 }
 
                 float3 diffuseReflection = atten * _LightColor0.xyz;

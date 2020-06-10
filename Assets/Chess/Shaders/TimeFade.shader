@@ -8,6 +8,7 @@
     SubShader
     {
         Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+        Cull Off
         Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
 

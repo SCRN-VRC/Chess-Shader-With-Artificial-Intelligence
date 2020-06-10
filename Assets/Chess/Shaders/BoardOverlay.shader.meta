@@ -5,6 +5,7 @@ ShaderImporter:
   defaultTextures:
   - _AtlasTex: {fileID: 2800000, guid: fef4039bb7044ad489c83ca05e37f2aa, type: 3}
   - _BufferTex: {fileID: 8400000, guid: bf73458dffc6abe459ea0cd4cfdf7763, type: 2}
+  - _Frame: {fileID: 2800000, guid: ace828cc819a13042b09cb78eeaff470, type: 3}
   nonModifiableTextures: []
   userData: 
   assetBundleName: 
