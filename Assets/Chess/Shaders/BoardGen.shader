@@ -112,6 +112,7 @@ Shader "ChessBot/BoardGen"
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
                 float4 drawResignNewReset = LoadValueFloat(_BufferTex, txDrawResignNewReset);
                 float4 buttonPos = LoadValueFloat(_BufferTex, txButtonPos);
+                float4 lastDest = LoadValueFloat(_BufferTex, txLastDest);
 
                 // Initialize the shaduuurrr
                 if (_Time.y < 1.0 ||
@@ -128,6 +129,7 @@ Shader "ChessBot/BoardGen"
                     playerPosState = float4(-1..xx, 0..xx);
                     drawResignNewReset = 0.0;
                     buttonPos = 0.0;
+                    lastDest = -1.0;
                 }
 
                 [branch]
@@ -324,7 +326,6 @@ Shader "ChessBot/BoardGen"
                         bestBoards[0] = -1;
                         float bestScore = FLT_MAX; // Minimize this
 
-
                         [unroll]
                         for (int i = txEvalArea.x; i <= txEvalArea.z; i++) {
                             float4 eOut = asfloat(_BufferTex.Load(int3(i, txEvalArea.y, 0)));
@@ -344,12 +345,21 @@ Shader "ChessBot/BoardGen"
 
                         // Replace the current board
                         if (bestMove.x > -1) {
+
+                            // Keep last board
+                            uint4 boardHistory[2];
+                            boardHistory[0] = curBoard[T_RIGHT];
+
                             // The y value corresponds to the parent board
                             bestMove.xy = int2(bestMove.y - 2, 0);
                             curBoard[B_LEFT] = LoadValueUint(_BufferTex, bestMove);
                             curBoard[B_RIGHT] = LoadValueUint(_BufferTex, bestMove + int2(1, 0));
                             curBoard[T_LEFT] = LoadValueUint(_BufferTex, bestMove + int2(0, 1));
                             curBoard[T_RIGHT] = LoadValueUint(_BufferTex, bestMove + int2(1, 1));
+                        
+                            // Highlight computer's move
+                            boardHistory[1] = curBoard[T_RIGHT];
+                            lastDest.xy = findComputerDest(boardHistory);
                         }
 
                         // Player's turn
@@ -452,6 +462,7 @@ Shader "ChessBot/BoardGen"
                                 turnWinUpdateLate.z = 0.0;
                                 playerSrcDest.xy = -1.0;
                                 playerSrcDest.zw = destPos;
+                                lastDest.xy = destPos;
                                 playerPosState.xyzw = float4(-1..xx, 0..xx);
                             }
                             else
@@ -475,6 +486,7 @@ Shader "ChessBot/BoardGen"
                     StoreValueFloat(txTurnWinUpdateLate, turnWinUpdateLate, col, px);
                     StoreValueFloat(txDrawResignNewReset, drawResignNewReset, col, px);
                     StoreValueFloat(txButtonPos, buttonPos, col, px);
+                    StoreValueFloat(txLastDest, lastDest, col, px);
                 }
                 // Generate all possible moves to a depth of 2
                 else if (all(px < int2(boardParams.zw)))

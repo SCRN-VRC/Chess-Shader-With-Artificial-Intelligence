@@ -956,4 +956,26 @@ int2 findParentBoard(int boardSetID)
         int2((boardSetID - 1) * 2, 0) ;
 }
 
+// Since there's no space to save the ID of the piece the computer
+// moved, find the difference between two boards to highlight
+float2 findComputerDest(in uint4 boardHistory[2])
+{
+    int3 ind = -1;
+    // XOR the boards to find where it changed
+    [unroll]
+    for (int i = 0; i < 4; i++) {
+        ind.x = ((boardHistory[0][i] ^ boardHistory[1][i]) > 0) ? i : ind.x;
+    }
+    if (ind.x < 0) return ind.yz;
+    uint2 buff;
+    [unroll]
+    for (int j = 0; j < 4; j++) {
+        buff.x = ((boardHistory[0][ind.x]) >> (j * 8)) & 0xff;
+        buff.y = ((boardHistory[1][ind.x]) >> (j * 8)) & 0xff;
+        ind.yz = ((buff.x ^ buff.y) > 0) ?
+            float2(buff.y & 0xf, buff.y >> 4) - 1.0 : ind.yz;
+    }
+    return ind.yz;
+}
+
 #endif

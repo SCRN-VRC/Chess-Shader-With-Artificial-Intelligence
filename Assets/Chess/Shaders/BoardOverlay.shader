@@ -6,9 +6,10 @@
         _Color2 ("Board Color 2", Color) = (0,0,0,1)
         _Color3 ("Piece Color 1", Color) = (1,1,1,1)
         _Color4 ("Piece Color 2", Color) = (0,0,0,1)
-        _Color5 ("Selected Color", Color) = (1,0,0,1)
+        _Color5 ("Selected Color", Color) = (0.5,0.5,0,1)
         _Color6 ("Valid Move Color", Color) = (0,1,0,1)
         _Color7 ("Final Selection Color", Color) = (0,0,1,1)
+        _Color8 ("Move History Color", Color) = (1,0,0,1)
         _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
         _Frame ("Highlight Frame", 2D) = "white" {}
@@ -54,6 +55,7 @@
             float4 _Color5;
             float4 _Color6;
             float4 _Color7;
+            float4 _Color8;
             uint2 _Pixel;
 
             v2f vert (appdata v)
@@ -185,14 +187,22 @@
                 // float4 pc = tex2D(_AtlasTex, grid_uv * 0.14286 + piecePos);
                 // pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
+                // Highlight current position
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
                 col = lerp(col, _Color5, frame *
                     (playerPosState.x > -1 && all(uint2(playerPosState.xy) == uv_id)));
                 
+                // Highlight player selected piece
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
                 col = lerp(col, _Color7, frame *
                     (playerSrcDest.x > -1 && all(uint2(playerSrcDest.xy) == uv_id)));
                 
+                // Highlight last moves
+                float4 lastDest = LoadValueFloat(_BufferTex, txLastDest);
+                col = lerp(col, _Color8, frame *
+                    (lastDest.x > -1 && all(uint2(lastDest.xy) == uv_id)));
+
+                // Highlight valid moves
                 float2 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
                 bool clear = validMove(board, playerSrcDest.xy, uv_id, kingMoved);
                 col = lerp(col, _Color6, frame * clear);

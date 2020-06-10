@@ -12,6 +12,7 @@
 #define txPlayerPosState                int2(6, 511)
 #define txDrawResignNewReset            int2(7, 511)
 #define txButtonPos                     int2(8, 511)
+#define txLastDest                      int2(9, 511)
 #define txEvalArea                      int4(360, 511, 511, 511)
 
 // States for extracting touch input
