@@ -33,8 +33,8 @@ Shader "ChessBot/BoardGen"
             #pragma target 5.0
 
             #include "UnityCG.cginc"
-            #include "BotInclude.cginc"
-            //#include "Debugging.cginc"
+            #include "ChessInclude.cginc"
+            #include "Debugging.cginc"
             #include "Layout.cginc"
 
             /*
@@ -62,159 +62,6 @@ Shader "ChessBot/BoardGen"
                 float3 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
             };
-
-            /*
-                ID = Column id
-            */
-            void doMoveParams (in uint4 boardInput[4], in uint ID, in uint turn,
-                out uint2 srcPieceID, out int2 src, out int2 dest)
-            {
-
-                uint idx_t = ID.x;
-
-                // Pawns
-                if (idx_t < moveNum[PAWN].y)
-                {
-                    // Each unique pawn have 4 moves each
-                    // pID for pawns goes from 8 to 15
-                    srcPieceID = uint2(PAWN, floor(idx_t / 4) + 8);
-                    dest = (turn == WHITE ? pawnListW[idx_t % 4] :
-                                            pawnListB[idx_t % 4]);
-                }
-                // Knights
-                else if (idx_t < moveNum[KNIGHT].y)
-                {
-                    idx_t -= moveNum[PAWN].y;
-                    srcPieceID = uint2(KNIGHT,
-                        idx_t < uint(moveNum[KNIGHT].x * 0.5) ? 1 : 6);
-                    dest = knightList[idx_t % 8];
-                }
-                // Bishops
-                else if (idx_t < moveNum[BISHOP].y)
-                {
-                    idx_t -= moveNum[KNIGHT].y;
-                    srcPieceID = uint2(BISHOP,
-                        idx_t < uint(moveNum[BISHOP].x * 0.5) ? 2 : 5);
-                    dest = 0;
-                }
-                // Rooks
-                else if (idx_t < moveNum[ROOK].y)
-                // King side rooks don't shift
-                {
-                    idx_t -= moveNum[BISHOP].y;
-                    srcPieceID = uint2(ROOK,
-                        (idx_t < (uint(moveNum[ROOK].x * 0.5))) ? 0 : 7);
-                    dest = 0;
-                }
-                // Queen
-                // Kings/Queens don't need shifts srcPieceID.y shifts
-                else if (idx_t < moveNum[QUEEN].y)
-                {
-                    srcPieceID = uint2(QUEEN, 3);
-                    dest = 0;
-                }
-                // King
-                else if (idx_t < moveNum[KING].y)
-                {
-                    idx_t -= moveNum[QUEEN].y;
-                    srcPieceID = uint2(KING, 4);
-                    dest = kingList[idx_t];
-                }
-                else
-                {
-                    srcPieceID = 0;
-                    dest = -1000;
-                }
-                srcPieceID.x |= (turn << 3);
-
-                // Find the source position
-                uint shift = pID[srcPieceID.y] -
-                    (floor(pID[srcPieceID.y] / 100) * 100);
-                uint buff = ((boardInput[turn == WHITE ? T_LEFT : T_RIGHT]
-                    [floor(pID[srcPieceID.y] / 100)]) >> shift) & 0xff;
-                
-                // The board saves positions in (y, x) format
-                // y, x to x, y make sure to -1 
-                src = int2(buff & 0xf, buff >> 4) - 1;
-
-                // Reset ID
-                idx_t = ID.x;
-
-                // Pawns
-                if (idx_t < moveNum[PAWN].y)
-                { dest = src + dest; }
-                // Knights
-                else if (idx_t < moveNum[KNIGHT].y)
-                { dest = src + dest; }
-                // Bishops
-                else if (idx_t < moveNum[BISHOP].y)
-                {
-                    idx_t -= moveNum[KNIGHT].y;
-                    int4 bOrigin = getBishopOrigin(src);
-                    // King/Queen side
-                    uint IDcond = fmod(idx_t, moveNum[BISHOP].x * 0.5);
-                    [flatten]
-                    // Queen side
-                    if (idx_t < uint(moveNum[BISHOP].x * 0.5))
-                    {
-                        // Since the bishop moves aren't mirror for the black pieces
-                        dest = IDcond < (turn ? 7 : 8) ?
-                            bOrigin.xy + int2(-1, 1) * IDcond :
-                            bOrigin.zw + int2(1, 1) * (IDcond - (turn ? 7 : 8));
-                    }
-                    // King side
-                    else
-                    {
-                        dest = IDcond < (turn ? 7 : 8) ?
-                            bOrigin.zw + int2(1, 1) * IDcond :
-                            bOrigin.xy + int2(-1, 1) * (IDcond - (turn ? 7 : 8));
-                    }
-                }
-                // Rooks
-                else if (idx_t < moveNum[ROOK].y)
-                {
-                    idx_t -= moveNum[BISHOP].y;
-                    // Half of the move-set goes horizontal, half vertical
-                    uint idMod = idx_t % (moveNum[ROOK].x / 2);
-                    uint r = moveNum[ROOK].x / 4;
-                    dest.x = idMod < r ? idMod : src.x ;
-                    dest.y = idMod < r ? src.y : idMod - r ;
-                }
-                // Queen
-                else if (idx_t < moveNum[QUEEN].y)
-                {
-                    idx_t -= moveNum[ROOK].y;
-                    [flatten]
-                    // Rook like movement
-                    if (idx_t < uint(moveNum[ROOK].x * 0.5)) {
-                        uint r = moveNum[ROOK].x * 0.25;
-                        dest.x = idx_t < r ? idx_t : src.x ;
-                        dest.y = idx_t < r ? src.y : idx_t - r ;
-                    }
-                    // Bishop like movement
-                    else {
-                        idx_t -= uint(moveNum[ROOK].x * 0.5);
-                        int4 bOrigin = getBishopOrigin(src);
-                        // Different moves on white/black tiles
-                        bool onBlack = (src.x % 2 == src.y % 2);
-                        dest = idx_t < (onBlack ? 7 : 8) ?
-                            bOrigin.xy + int2(-1, 1) * idx_t :
-                            bOrigin.zw + int2(1, 1) * (idx_t - (onBlack ? 7 : 8));
-                    }
-                }
-                // King
-                else if (idx_t < moveNum[KING].y)
-                { dest = src + dest; }
-            }
-
-            // Given the board ID, return the parent position
-            // of the generated board
-            int2 findParentBoard(int boardSetID)
-            {
-                return boardSetID == 0 ?
-                    txCurBoardBL :
-                    int2((boardSetID - 1) * 2, 0) ;
-            }
 
             v2f vert (appdata v)
             {
@@ -318,10 +165,11 @@ Shader "ChessBot/BoardGen"
                             }
                         }
                         // Pick a "random" board if scores are equal
-                        uint ind = floor(hash11(id + c.x + c.y + timerLiftSeed.z)
+                        uint ind = floor(hash11(id * timerLiftSeed.z)
                             * min(c.y, MAX_KEEP));
 
                         evalPrev.yz = bestBoards[ind].xy;
+                        
                         // Mark as done
                         evalPrev.w = 1.0;
                     }
@@ -469,19 +317,30 @@ Shader "ChessBot/BoardGen"
                         turnWinUpdateLate.y < 0.0)
                     {
                         // Pick best move for computer (black)
+                        const int MAX_KEEP = 10;
+                        uint2 c = 0;
+                        int2 bestBoards[MAX_KEEP]; // Keep 10 of the best
                         int2 bestMove = -1;
+                        bestBoards[0] = -1;
                         float bestScore = FLT_MAX; // Minimize this
-                        // int c = 0;
-                        // float scoreTest[4] = {0,0,0,0};
+
 
                         [unroll]
                         for (int i = txEvalArea.x; i <= txEvalArea.z; i++) {
                             float4 eOut = asfloat(_BufferTex.Load(int3(i, txEvalArea.y, 0)));
-                            bestMove = ((eOut.x < bestScore) && (eOut.x > FLT_MIN)) ?
-                                eOut.yz : bestMove;
-                            bestScore = ((eOut.x < bestScore) && (eOut.x > FLT_MIN)) ?
-                                eOut.x : bestScore;
+                            [flatten]
+                            if ((eOut.x <= bestScore) && (eOut.x > FLT_MIN))
+                            {
+                                c.xy = eOut.x < bestScore ? 0..xx : c.xy;
+                                bestBoards[c.x] = eOut.yz;
+                                bestScore = eOut.x;
+                                c.x = (c.x + 1) % MAX_KEEP;
+                                c.y += 1;
+                            }
                         }
+                        uint ind = floor(hash11(c.y * timerLiftSeed.z)
+                            * min(c.y, MAX_KEEP));
+                        bestMove = bestBoards[ind].xy;
 
                         // Replace the current board
                         if (bestMove.x > -1) {

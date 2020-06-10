@@ -29,7 +29,7 @@
             #pragma target 5.0
 
             #include "UnityCG.cginc"
-            #include "BotInclude.cginc"
+            #include "ChessInclude.cginc"
             #include "Layout.cginc"
             //#include "Debugging.cginc"
 
@@ -56,7 +56,6 @@
             sampler2D _BumpMap;
             samplerCUBE _Cube;
 
-            float4 _ChessGrabPass_TexelSize;
             float4 _Color1;
             float4 _Color2;
             float _Roughness;

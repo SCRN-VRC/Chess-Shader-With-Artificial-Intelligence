@@ -21,7 +21,7 @@
             #pragma fragment frag
 
             #include "UnityCG.cginc"
-            #include "BotInclude.cginc"
+            #include "ChessInclude.cginc"
             #include "Layout.cginc"
 
             struct appdata
@@ -66,6 +66,7 @@
                 [flatten]
                 if (i.uv.y > 0.75)
                 {
+                    [flatten]
                     if (turnWinUpdateLate.y == WHITE) {}
                     else if (turnWinUpdateLate.y == BLACK) { tuv.y -= 0.25; }
                     else if (turnWinUpdateLate.y == DRAW_ACCEPT) { tuv.y -= 0.5; }

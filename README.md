@@ -15,6 +15,10 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 2. Put the ChessAI prefab on your avatar
 3. I suggest using FinalIK or Rigidbodies to plant the chess board in world space, and the [Inventory System](https://github.com/Xiexe/VRCInventorySystem) to enable/disable the game object.
 
+## Q & A
+1. What's the difference between the "New Game" and "Reset" buttons?
+The randomness helps the AI to pick moves that cost the same. "New Game" generates a new random seed so the AI doesn't pick the same sequence. "Reset" sets the randomness back to its initial state.
+
 ## How It Works
 ### Chessboard
 <img src="Images/Chessboard.png"/>

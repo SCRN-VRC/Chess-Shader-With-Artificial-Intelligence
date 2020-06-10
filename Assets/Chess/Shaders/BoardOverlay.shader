@@ -11,7 +11,8 @@
         _Color7 ("Final Selection Color", Color) = (0,0,1,1)
         _AtlasTex ("Chess Pieces Atlas", 2D) = "white" {}
         _BufferTex ("ChessBot Buffer", 2D) = "black" {}
-        _Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
+        _Frame ("Highlight Frame", 2D) = "white" {}
+        [HideInInspector]_Pixel ("Pixel Check", Vector) = (0, 255, 0, 0)
     }
     SubShader
     {
@@ -27,7 +28,7 @@
             #pragma target 5.0
 
             #include "UnityCG.cginc"
-            #include "BotInclude.cginc"
+            #include "ChessInclude.cginc"
             //#include "Debugging.cginc"
             #include "Layout.cginc"
 
@@ -45,6 +46,7 @@
 
             Texture2D<float4> _BufferTex;
             sampler2D _AtlasTex;
+            sampler2D _Frame;
             float4 _Color1;
             float4 _Color2;
             float4 _Color3;
@@ -69,6 +71,8 @@
                 // col = lerp(_Color2, _Color1, col.r);
                 float4 col = 0.0;
                 float2 grid_uv = fmod(i.uv * 8, 1.);
+
+                float frame = tex2D(_Frame, grid_uv).a;
 
                 uint4 board[2] = { LoadValueUint(_BufferTex, _Pixel * 2),
                     LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0)) };
@@ -182,14 +186,16 @@
                 // pc.rgb = lerp(_Color4, _Color3, smoothstep(0, 1, dot(pc.rgb, 1..xxx) * 0.5));
 
                 float4 playerPosState = LoadValueFloat(_BufferTex, txPlayerPosState);
-                col = lerp(col, _Color5, playerPosState.x > -1 && all(uint2(playerPosState.xy) == uv_id));
+                col = lerp(col, _Color5, frame *
+                    (playerPosState.x > -1 && all(uint2(playerPosState.xy) == uv_id)));
                 
                 float4 playerSrcDest = LoadValueFloat(_BufferTex, txPlayerSrcDest);
-                col = lerp(col, _Color7, playerSrcDest.x > -1 && all(uint2(playerSrcDest.xy) == uv_id));
+                col = lerp(col, _Color7, frame *
+                    (playerSrcDest.x > -1 && all(uint2(playerSrcDest.xy) == uv_id)));
                 
                 float2 kingMoved = LoadValueFloat(_BufferTex, txKingMoved);
                 bool clear = validMove(board, playerSrcDest.xy, uv_id, kingMoved);
-                col = lerp(col, _Color6, clear);
+                col = lerp(col, _Color6, frame * clear);
 
                 // col = lerp(col, pc, pc.a);
 
