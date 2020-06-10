@@ -165,12 +165,14 @@
 
                 float3 diffuseReflection = atten * _LightColor0.xyz;
 
-                float4 lightFinal = float4(pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
-                    diffuseReflection, 0.5), 1.0);
+                float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
+                    diffuseReflection, 0.5);
 
-                return min(((float4(skyColor, 1.0) * (1.0 - _GrabPassAmount) +
-                    _GrabPassAmount * grab) * col + col * (powRim) +
-                    (reflcol * reflcol * _CubeAmount) * rim) * lightFinal, 1.4);
+                col.rgb = min(((skyColor * (1.0 - _GrabPassAmount) +
+                    _GrabPassAmount * grab.rgb) * col.rgb + col.rgb * (powRim) +
+                    (reflcol.rgb * reflcol.rgb * _CubeAmount) * rim) * lightFinal, 1.4);
+                
+                return col;
             }
             ENDCG
         }

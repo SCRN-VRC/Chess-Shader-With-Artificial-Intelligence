@@ -1,9 +1,8 @@
-﻿Shader "Unlit/TimeFade"
+﻿Shader "ChessBot/VRCBot"
 {
     Properties
     {
-        _MainTex ("Main Texture", 2D) = "white" {}
-        _FadeTimer ("Fade Timer (seconds)", Float) = 30.0
+        _MainTex ("Texture", 2D) = "white" {}
     }
     SubShader
     {
@@ -18,7 +17,6 @@
             #pragma fragment frag
 
             #include "UnityCG.cginc"
-            #include "Layout.cginc"
 
             struct appdata
             {
@@ -33,16 +31,7 @@
             };
 
             sampler2D _MainTex;
-            float4 _MainTex_TexelSize;
-            float _FadeTimer;
-
-            float cubicPulse( float c, float w, float x )
-            {
-                x = abs(x - c);
-                if(x > w) return 0.0;
-                x /= w;
-                return 1.0 - x*x*(3.0-2.0*x);
-            }
+            float4 _MainTex_ST;
 
             v2f vert (appdata v)
             {
@@ -54,12 +43,7 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
-                // Blocky fade out effect
-                fixed2 hashID = floor(i.uv * float2(_MainTex_TexelSize.z / _MainTex_TexelSize.w, 1.0) * 8.0);
-                fixed timer = _Time.y + hash11((hashID.x + hashID.y * 8.0) * 82712.3384);
-                fixed alpha = max(step(timer, _FadeTimer), cubicPulse(_FadeTimer, 2.0, timer));
                 fixed4 col = tex2D(_MainTex, i.uv);
-                col.a *= alpha;
                 col.rgb *= col.a;
                 return col;
             }

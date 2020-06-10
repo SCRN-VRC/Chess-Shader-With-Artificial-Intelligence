@@ -13,6 +13,9 @@
 #define txDrawResignNewReset            int2(7, 511)
 #define txButtonPos                     int2(8, 511)
 #define txLastDest                      int2(9, 511)
+#define txVRCBotPos                     int2(10, 511)
+#define txVRCBotRot                     int2(11, 511)
+#define txVRCBotState                   int2(12, 511)
 #define txEvalArea                      int4(360, 511, 511, 511)
 
 // States for extracting touch input
@@ -26,6 +29,17 @@
 // x, y dimensions of set of board group generated per board
 // z, w dimensions of all boards combined
 #define boardParams        float4(302, 2, 302, 304)
+
+// VRCBot States
+#define BOT_IDLE           0
+#define BOT_PLAY           1
+#define BOT_WIN            2
+#define BOT_LOSE           3
+
+// Body Animations
+#define BOT_NONE           0
+#define BOT_NO             1
+#define BOT_YES            2
 
 // Number of rows we update each frame
 static const int boardDiv = 62;

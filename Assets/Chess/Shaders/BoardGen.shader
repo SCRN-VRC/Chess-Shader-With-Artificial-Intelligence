@@ -1,6 +1,6 @@
 /*
     TODO LIST:
-    - None! :)
+    - Fix AI sacrificing bishops
 */
 
 Shader "ChessBot/BoardGen"
@@ -374,16 +374,17 @@ Shader "ChessBot/BoardGen"
                         // Average position
                         float3 touchPosCount = 0.0;
                         [unroll]
-                        for (int i = 0; i < 24; i++) {
+                        for (int i = 0; i < 40; i++) {
                             [unroll]
-                            for (int j = 0; j < 24; j++) {
-                                float d = _TouchTex.Load(int3(i, j, 0)).r;
-                                touchPosCount.xy += d > 0.0 ? float2(i, j) : 0..xx;
+                            for (int j = 0; j < 40; j += 2) {
+                                int jx = (i & 0x1) == 0 ? j : j + 1 ;
+                                float d = _TouchTex.Load(int3(i, jx, 0)).r;
+                                touchPosCount.xy += d > 0.0 ? float2(i, jx) : 0..xx;
                                 touchPosCount.z += d > 0.0 ? 1.0 : 0.0;
                             }
                         }
                         touchPosCount.xy = floor(touchPosCount.xy /
-                            max(touchPosCount.z, 1.) * 0.3333 + .3333);
+                            max(touchPosCount.z, 1.) * 0.2 + 0.2);
 
                         // x is flipped
                         touchPosCount.x = 7.0 - touchPosCount.x;
@@ -475,6 +476,18 @@ Shader "ChessBot/BoardGen"
                         }
                     }
 
+                    // VRCBot state machine
+                    float4 vrcBotPos = LoadValueFloat(_BufferTex, txVRCBotPos);
+                    float4 vrcBotRot = LoadValueFloat(_BufferTex, txVRCBotRot);
+                    float4 vrcBotState = LoadValueFloat(_BufferTex, txVRCBotState);
+
+                    if (_Time.y < 1.0)
+                    {
+                        vrcBotPos = 0;
+                        vrcBotRot = 0;
+                        vrcBotState = 0;
+                    }
+
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
                     StoreValueUint(txCurBoardTL, curBoard[T_LEFT], col,  px);
@@ -487,6 +500,9 @@ Shader "ChessBot/BoardGen"
                     StoreValueFloat(txDrawResignNewReset, drawResignNewReset, col, px);
                     StoreValueFloat(txButtonPos, buttonPos, col, px);
                     StoreValueFloat(txLastDest, lastDest, col, px);
+                    StoreValueFloat(txVRCBotPos, vrcBotPos, col, px);
+                    StoreValueFloat(txVRCBotRot, vrcBotRot, col, px);
+                    StoreValueFloat(txVRCBotState, vrcBotState, col, px);
                 }
                 // Generate all possible moves to a depth of 2
                 else if (all(px < int2(boardParams.zw)))
