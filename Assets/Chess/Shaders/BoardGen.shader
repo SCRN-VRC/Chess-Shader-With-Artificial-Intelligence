@@ -34,7 +34,7 @@ Shader "ChessBot/BoardGen"
 
             #include "UnityCG.cginc"
             #include "ChessInclude.cginc"
-            #include "Debugging.cginc"
+            //#include "Debugging.cginc"
             #include "Layout.cginc"
 
             /*
@@ -477,16 +477,74 @@ Shader "ChessBot/BoardGen"
                     }
 
                     // VRCBot state machine
-                    float4 vrcBotPos = LoadValueFloat(_BufferTex, txVRCBotPos);
-                    float4 vrcBotRot = LoadValueFloat(_BufferTex, txVRCBotRot);
                     float4 vrcBotState = LoadValueFloat(_BufferTex, txVRCBotState);
 
-                    if (_Time.y < 1.0)
+                    if (_Time.y < 1.0 ||
+                        (drawResignNewReset.w > 0.0 && buttonPos.z < 1.0) ||
+                        (drawResignNewReset.z > 0.0 && buttonPos.z < 1.0))
                     {
-                        vrcBotPos = 0;
-                        vrcBotRot = 0;
-                        vrcBotState = 0;
+                        vrcBotState = 0.0;
                     }
+
+                    [flatten]
+                    if (vrcBotState.x == BOT_IDLE)
+                    {
+                        // End game conditions
+                        vrcBotState.x = turnWinUpdateLate.y == BLACK ?
+                            BOT_WIN : turnWinUpdateLate.y == WHITE ?
+                                BOT_LOSE : turnWinUpdateLate.y == DRAW_ACCEPT ?
+                                    BOT_LOSE : vrcBotState.x;
+                        // Keep at idle after end animation
+                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        // Player touched the board
+                        vrcBotState.x = playerPosState.z > 0.0 ?
+                            BOT_PLAY : vrcBotState.x;
+                        // Reset timer if player touched board;
+                        vrcBotState.z = playerPosState.z > 0.0 ? 0.0 : vrcBotState.z;
+                    }
+                    else if (vrcBotState.x == BOT_PLAY)
+                    {
+                        // Tie is lose state
+                        // Sorry not sorry
+                        vrcBotState.x = turnWinUpdateLate.y == BLACK ?
+                            BOT_WIN : turnWinUpdateLate.y == WHITE ?
+                                BOT_LOSE : turnWinUpdateLate.y == DRAW_ACCEPT ?
+                                    BOT_LOSE : vrcBotState.x;
+                    }
+                    else if (vrcBotState.x == BOT_WIN)
+                    {
+                        vrcBotState.z += 1.0;
+                        // Reset after 10 seconds
+                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        // Player touched the board
+                        vrcBotState.x = playerPosState.z > 0.0 ?
+                            BOT_PLAY : vrcBotState.x;
+                    }
+                    else if (vrcBotState.x == BOT_LOSE)
+                    {
+                        vrcBotState.z += 1.0;
+                        // Reset after 10 seconds
+                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        // Player touched the board
+                        vrcBotState.x = playerPosState.z > 0.0 ?
+                            BOT_PLAY : vrcBotState.x;
+                    }
+                    else { vrcBotState.x = BOT_IDLE; }
+
+                    // Response animations
+                    [flatten]
+                    if (vrcBotState.y == BOT_NONE)
+                    {
+                        vrcBotState.y = drawResignNewReset.x > 0.0 ? BOT_NO : vrcBotState.y;
+                    }
+                    else if (vrcBotState.y == BOT_NO)
+                    {
+                        vrcBotState.w += 1.0;
+                        // Reset after 1 second
+                        vrcBotState.y = vrcBotState.w > 10.0 ? BOT_NONE : vrcBotState.y;
+                        vrcBotState.w = vrcBotState.w > 10.0 ? 0.0 : vrcBotState.w;
+                    }
+                    else { vrcBotState.y = BOT_NONE; }
 
                     StoreValueUint(txCurBoardBL, curBoard[B_LEFT], col,  px);
                     StoreValueUint(txCurBoardBR, curBoard[B_RIGHT], col, px);
@@ -500,8 +558,6 @@ Shader "ChessBot/BoardGen"
                     StoreValueFloat(txDrawResignNewReset, drawResignNewReset, col, px);
                     StoreValueFloat(txButtonPos, buttonPos, col, px);
                     StoreValueFloat(txLastDest, lastDest, col, px);
-                    StoreValueFloat(txVRCBotPos, vrcBotPos, col, px);
-                    StoreValueFloat(txVRCBotRot, vrcBotRot, col, px);
                     StoreValueFloat(txVRCBotState, vrcBotState, col, px);
                 }
                 // Generate all possible moves to a depth of 2
