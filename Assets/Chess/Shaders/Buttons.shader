@@ -51,6 +51,8 @@
 
             fixed4 frag (v2f i) : SV_Target
             {
+                // Hide the image in the touch controls since its on top of it
+                if (unity_OrthoParams.w) discard;
                 fixed4 col = 0;
                 
                 // Split the uvs into two

@@ -16,7 +16,7 @@
     SubShader
     {
 
-        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" "LightMode"="ForwardBase" }
         LOD 200
 
         GrabPass { "_ChessGrabPass" }         
@@ -50,6 +50,7 @@
                 float4 pieceCol : TEXCOORD2;
                 float3 worldPos : TEXCOORD3;
                 float3 worldNormal : TEXCOORD4;
+                float3 ambient_SH : TEXCOORD5;
             };
 
             Texture2D<float4> _BufferTex;
@@ -119,6 +120,7 @@
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
                 o.pieceCol = v.uv2.y < 0.5 ? _Color1 : _Color2;
+                o.ambient_SH =  ShadeSH9(float4(o.worldNormal, 1.0));
                 return o;
             }
 
@@ -167,7 +169,7 @@
                 float3 diffuseReflection = atten * _LightColor0.xyz;
 
                 float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
-                    diffuseReflection, 0.5);
+                    diffuseReflection + i.ambient_SH * 0.7, 0.8);
 
                 col.rgb = min(((skyColor * (1.0 - _GrabPassAmount) +
                     _GrabPassAmount * grab.rgb) * col.rgb + col.rgb * (powRim) +

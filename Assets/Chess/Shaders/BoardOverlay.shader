@@ -68,6 +68,8 @@
             
             float4 frag (v2f i) : SV_Target
             {
+                // Hide the overlay in the touch controls since its on top of it
+                if (unity_OrthoParams.w) discard;
                 uint2 uv_id = floor(i.uv * 8);
                 // float3 col = fmod(dot(uv_id, 1..xx), 2);
                 // col = lerp(_Color2, _Color1, col.r);

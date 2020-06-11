@@ -7,7 +7,7 @@
     }
     SubShader
     {
-        Tags { "RenderType"="Transparent" "Queue"="Transparent" }
+        Tags { "RenderType"="Transparent" "Queue"="Transparent" "LightMode"="ForwardBase" }
         Cull Off
         Blend SrcAlpha OneMinusSrcAlpha
         LOD 100
@@ -39,6 +39,7 @@
                 float2 uv2 : TEXCOORD1;
                 float3 worldPos : TEXCOORD2;
                 float3 worldNormal : TEXCOORD3;
+                float3 ambient_SH : TEXCOORD4;
             };
 
             Texture2D<float4> _BufferTex;
@@ -145,6 +146,7 @@
                 o.uv2 = v.uv2;
                 o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 o.worldNormal = UnityObjectToWorldNormal(v.normal);
+                o.ambient_SH =  ShadeSH9(float4(o.worldNormal, 1.0));
                 return o;
             }
 
@@ -174,7 +176,7 @@
                     saturate(dot(i.worldNormal, lightDirection));
 
                 float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
-                    diffuseReflection, 0.5);
+                    diffuseReflection + i.ambient_SH * 0.7, 0.8);
                 
                 // Don't cast light on the rings
                 col.rgb *= i.uv2.x < 0.75 ? lightFinal : 1.0;
