@@ -18,7 +18,7 @@ Shader "ChessBot/BoardGen"
         Tags { "Queue"="Overlay+1" "ForceNoShadowCasting"="True" "IgnoreProjector"="True" }
         ZWrite Off
         ZTest Always
-        Cull Front
+        Cull Off
 
         Pass
         {
@@ -54,6 +54,7 @@ Shader "ChessBot/BoardGen"
 
             struct appdata
             {
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
 
@@ -71,8 +72,8 @@ Shader "ChessBot/BoardGen"
                 v.uv.y = 1-v.uv.y;
                 #endif
                 o.uv.xy = UnityStereoTransformScreenSpaceTex(v.uv);
-                o.uv.z = distance(_WorldSpaceCameraPos,
-                    mul(unity_ObjectToWorld, fixed4(0,0,0,1)).xyz) > _MaxDist ?
+                o.uv.z = (distance(_WorldSpaceCameraPos,
+                    mul(unity_ObjectToWorld, fixed4(0,0,0,1)).xyz) > _MaxDist) ?
                     -1 : 1;
                 return o;
             }
@@ -495,7 +496,7 @@ Shader "ChessBot/BoardGen"
                                 BOT_LOSE : turnWinUpdateLate.y == DRAW_ACCEPT ?
                                     BOT_LOSE : vrcBotState.x;
                         // Keep at idle after end animation
-                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        vrcBotState.x = vrcBotState.z > 200.0 ? BOT_IDLE : vrcBotState.x;
                         // Player touched the board
                         vrcBotState.x = playerPosState.z > 0.0 ?
                             BOT_PLAY : vrcBotState.x;
@@ -515,18 +516,18 @@ Shader "ChessBot/BoardGen"
                     {
                         vrcBotState.z += 1.0;
                         // Reset after 10 seconds
-                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        vrcBotState.x = vrcBotState.z > 200.0 ? BOT_IDLE : vrcBotState.x;
                         // Player touched the board
-                        vrcBotState.x = playerPosState.z > 0.0 ?
+                        vrcBotState.x = playerPosState.z > 0.0 && turnWinUpdateLate.y < 0.0 ?
                             BOT_PLAY : vrcBotState.x;
                     }
                     else if (vrcBotState.x == BOT_LOSE)
                     {
                         vrcBotState.z += 1.0;
                         // Reset after 10 seconds
-                        vrcBotState.x = vrcBotState.z > 100.0 ? BOT_IDLE : vrcBotState.x;
+                        vrcBotState.x = vrcBotState.z > 200.0 ? BOT_IDLE : vrcBotState.x;
                         // Player touched the board
-                        vrcBotState.x = playerPosState.z > 0.0 ?
+                        vrcBotState.x = playerPosState.z > 0.0 && turnWinUpdateLate.y < 0.0 ?
                             BOT_PLAY : vrcBotState.x;
                     }
                     else { vrcBotState.x = BOT_IDLE; }
@@ -541,8 +542,8 @@ Shader "ChessBot/BoardGen"
                     {
                         vrcBotState.w += 1.0;
                         // Reset after 1 second
-                        vrcBotState.y = vrcBotState.w > 10.0 ? BOT_NONE : vrcBotState.y;
-                        vrcBotState.w = vrcBotState.w > 10.0 ? 0.0 : vrcBotState.w;
+                        vrcBotState.y = vrcBotState.w > 15.0 ? BOT_NONE : vrcBotState.y;
+                        vrcBotState.w = vrcBotState.w > 15.0 ? 0.0 : vrcBotState.w;
                     }
                     else { vrcBotState.y = BOT_NONE; }
 

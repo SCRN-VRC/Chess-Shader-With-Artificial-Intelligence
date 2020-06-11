@@ -2,7 +2,7 @@
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _MainTex ("Texture", 2D) = "black" {}
         _MaxDist ("Max Distance", Float) = 0.05
     }
     SubShader
@@ -10,7 +10,7 @@
         Tags { "Queue"="Overlay+1" "ForceNoShadowCasting"="True" "IgnoreProjector"="True" }
         ZWrite Off
         ZTest Always
-        Cull Front
+        Cull Off
         
         Pass
         {
@@ -28,6 +28,7 @@
 
             struct appdata
             {
+                float4 vertex : POSITION;
                 float2 uv : TEXCOORD0;
             };
 
@@ -49,8 +50,8 @@
                 v.uv.y = 1-v.uv.y;
                 #endif
                 o.uv.xy = UnityStereoTransformScreenSpaceTex(v.uv);
-                o.uv.z = distance(_WorldSpaceCameraPos,
-                    mul(unity_ObjectToWorld, float4(0,0,0,1)).xyz) > _MaxDist ?
+                o.uv.z = (distance(_WorldSpaceCameraPos,
+                    mul(unity_ObjectToWorld, float4(0,0,0,1)).xyz) > _MaxDist) ?
                     -1 : 1;
                 return o;
             }

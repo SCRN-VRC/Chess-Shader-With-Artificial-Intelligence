@@ -124,6 +124,8 @@
 
             float4 frag (v2f i) : SV_Target
             {
+                // Hide the pieces in the touch controls since its on top of it
+                if (unity_OrthoParams.w) discard;
                 float4 col = i.pieceCol;
 
                 // Skybox

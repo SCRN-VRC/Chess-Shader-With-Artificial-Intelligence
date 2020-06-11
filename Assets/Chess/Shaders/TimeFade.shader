@@ -3,7 +3,7 @@
     Properties
     {
         _MainTex ("Main Texture", 2D) = "white" {}
-        _FadeTimer ("Fade Timer (seconds)", Float) = 30.0
+        _FadeTimer ("Fade Timer (seconds)", Float) = 120.0
     }
     SubShader
     {
