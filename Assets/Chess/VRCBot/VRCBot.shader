@@ -178,8 +178,7 @@
                 float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
                     diffuseReflection + i.ambient_SH * 0.7, 0.8);
                 
-                // Don't cast light on the rings
-                col.rgb *= i.uv2.x < 0.75 ? lightFinal : 1.0;
+                col.rgb *= lightFinal;
                 // Make rings transparent
                 col.a = i.uv2.x < 0.75 ? col.a : col.r;
 

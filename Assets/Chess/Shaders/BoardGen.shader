@@ -228,17 +228,21 @@ Shader "ChessBot/BoardGen"
                         curBoard[T_RIGHT] = newBoard(T_RIGHT);
                     }
 
-                    // // Debug Stuff
-                    // {
-                    //     int2 pos = int2(floor(fmod(_Time.y * 4, 151)) * 2, floor(fmod(_Time.y * 4, 151)) * 2 + 1);
-                    //     //int2 pos = int2(34, 35);
-                    //     uint4 boardTop[2] = {
-                    //         asuint(_BufferTex.Load(int3(pos.x, 231, 0))),
-                    //         asuint(_BufferTex.Load(int3(pos.y, 231, 0)))
-                    //     };
-                    //     float score = eval(boardTop, turnWinUpdateLate.w);
-                    //     buffer[0] = float4(score, pos.x, 231, 0);
-                    // }
+                    // Debug Stuff
+                    {
+                        // int2 pos = int2(floor(fmod(_Time.y * 4, 151)) * 2, floor(fmod(_Time.y * 4, 151)) * 2 + 1);
+                        // //int2 pos = int2(34, 35);
+                        // uint4 boardTop[2] = {
+                        //     asuint(_BufferTex.Load(int3(pos.x, 145, 0))),
+                        //     asuint(_BufferTex.Load(int3(pos.y, 145, 0)))
+                        // };
+                        // float score = eval(boardTop, turnWinUpdateLate.w);
+                        // buffer[0] = float4(score, pos.x, 145, 0);
+
+                        // int pos = 360 + floor(fmod(_Time.y * 4, 151));
+                        // float4 eOut = asfloat(_BufferTex.Load(int3(pos, txEvalArea.y, 0)));
+                        // buffer[0] = eOut;
+                    }
 
                     // If player resigned computer wins
                     turnWinUpdateLate.y = drawResignNewReset.y > 0.0 ?
@@ -284,10 +288,10 @@ Shader "ChessBot/BoardGen"
                     bool lateGame = turnWinUpdateLate.w > 0.0 ? true : false;
                     
                     // Both sides no queens
-                    buf.x = curBoard[T_LEFT][0];
-                    buf.y = curBoard[T_RIGHT][0];
-                    buf = buf & 0xff;
-                    lateGame = lateGame || ((buf.x + buf.y) > 0 ? false : true);
+                    // buf.x = curBoard[T_LEFT][0];
+                    // buf.y = curBoard[T_RIGHT][0];
+                    // buf = buf & 0xff;
+                    // lateGame = lateGame || ((buf.x + buf.y) > 0 ? false : true);
 
                     // One queen no pieces
                     buf.x = curBoard[T_LEFT][0] & 0xffffff00;

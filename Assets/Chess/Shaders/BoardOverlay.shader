@@ -71,19 +71,20 @@
                 // Hide the overlay in the touch controls since its on top of it
                 if (unity_OrthoParams.w) discard;
                 uint2 uv_id = floor(i.uv * 8);
-                // float3 col = fmod(dot(uv_id, 1..xx), 2);
-                // col = lerp(_Color2, _Color1, col.r);
+
+                // float4 col = float4(fmod(dot(uv_id, 1..xx), 2).xxx, 1.0);
+                // col.rgb = lerp(_Color2, _Color1, col.r);
+
                 float4 col = 0.0;
                 float2 grid_uv = fmod(i.uv * 8, 1.);
-
                 float frame = tex2D(_Frame, grid_uv).a;
 
                 uint4 board[2] = { LoadValueUint(_BufferTex, _Pixel * 2),
                     LoadValueUint(_BufferTex, _Pixel * 2 + uint2(1, 0)) };
 
                 // uint4 fullBoard[4] = {
-                //     fullTests[2][0], fullTests[2][1],
-                //     fullTests[2][2], fullTests[2][3]
+                //     fullTests[3][0], fullTests[3][1],
+                //     fullTests[3][2], fullTests[3][3]
                 // };
                 // uint4 board[2] = { fullBoard[0], fullBoard[1] };
 
