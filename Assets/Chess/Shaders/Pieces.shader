@@ -171,9 +171,9 @@
                 float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
                     diffuseReflection + i.ambient_SH * 0.7, 0.8);
 
-                col.rgb = min(((skyColor * (1.0 - _GrabPassAmount) +
+                col.rgb = clamp(((skyColor * (1.0 - _GrabPassAmount) +
                     _GrabPassAmount * grab.rgb) * col.rgb + col.rgb * (powRim) +
-                    (reflcol.rgb * reflcol.rgb * _CubeAmount) * rim) * lightFinal, 1.4);
+                    (reflcol.rgb * reflcol.rgb * _CubeAmount) * rim) * lightFinal, 0.0, 1.4);
                 
                 return col;
             }
