@@ -151,7 +151,6 @@
                 grab.rgb = HueShift(grab.rgb, powRim * 2.5);
 
                 // Lighting
-                float3 lightDirection;
                 float atten;
 
                 // Directional light
@@ -166,10 +165,15 @@
                     atten = 1.0/dist;
                 }
 
+                float atUVPoint = attenUV(unity_4LightAtten0.x, float3(unity_4LightPosX0.x, unity_4LightPosY0.x, unity_4LightPosZ0.x), i.worldPos.xyz);
+                atUVPoint = attenFunc(atUVPoint) * 0.3;
+
                 float3 diffuseReflection = atten * _LightColor0.xyz;
 
+                // Is this how you do lighting? I dunno
                 float3 lightFinal = pow(UNITY_LIGHTMODEL_AMBIENT.xyz +
-                    diffuseReflection + i.ambient_SH * 0.7, 0.8);
+                    diffuseReflection + i.ambient_SH * 0.7 + (unity_LightColor[0].rgb *
+                    (1 / distance(float3(unity_4LightPosX0.x, unity_4LightPosY0.x, unity_4LightPosZ0.x), i.worldPos.xyz)) * atUVPoint), 0.8);
 
                 col.rgb = clamp(((skyColor * (1.0 - _GrabPassAmount) +
                     _GrabPassAmount * grab.rgb) * col.rgb + col.rgb * (powRim) +

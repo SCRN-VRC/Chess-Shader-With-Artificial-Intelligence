@@ -595,6 +595,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
                     boardPosArray[ind.z][3] |= masks.y;
                 }
             }
+            else return 0;
         }
 
         destPiece |= colP << 3;
@@ -775,6 +776,7 @@ uint4 doMoveNoCheck(in uint4 boardPosArray[4], in uint posID, in uint2 srcPieceI
                     boardPosArray[ind.x][1] |= masks.y;
                 }
             }
+            else return 0;
         }
 
         // New position

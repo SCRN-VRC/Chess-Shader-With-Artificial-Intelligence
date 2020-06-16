@@ -109,4 +109,13 @@ float4 HueShift (in float3 Color, in float Shift)
     return float4(Color,1.0);
 }
 
+float attenUV (float lightAtten0, float3 LightPos5, float3 worldPos) {
+    float range = (0.005 * sqrt(1000000.0 - lightAtten0)) / sqrt(lightAtten0);
+    return distance(LightPos5, worldPos) / range;
+}
+
+float attenFunc (float attenUV) {
+    return saturate(1.0 / (1.0 + 25.0 * attenUV * attenUV) * saturate((1.0 - attenUV) * 5.0));
+}
+
 #endif
