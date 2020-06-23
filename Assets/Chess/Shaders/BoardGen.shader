@@ -312,7 +312,7 @@ Shader "ChessBot/BoardGen"
                         c = bt.z > 0 ? c + 1 : c;
                         c = bt.w > 0 ? c + 1 : c;
                     }
-                    lateGame = lateGame || (c <= 1 ? true : false);
+                    lateGame = lateGame || (c <= 8 ? true : false);
                     turnWinUpdateLate.w = lateGame ? 1.0 : 0.0;
 
                     // Computer's turn
