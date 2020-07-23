@@ -11,7 +11,9 @@ A simple AI implemented using the classic minimax algorithm except it's on a GPU
 * Lots of wasted space, no dynamic memory allocation in shadurs
 
 ## Setup for VRChat
-#### [VRChat layers must be setup already](https://docs.vrchat.com/docs/creating-your-first-world#step-4---setting-up-the-scene)
+#### Prerequisites
+* [VRC SDK 2](https://vrchat.com/home/download) setup in a Unity project
+* [VRChat layers must be setup already](https://docs.vrchat.com/docs/creating-your-first-world#step-4---setting-up-the-scene)
 ### Avatars
 1. Import the ChessAi.unitypackage
 2. Put PrefabAvatarChessAI.prefab on your avatar
