@@ -53,5 +53,5 @@ The randomness helps the AI to pick moves that cost the same. "New Game" generat
 * Each piece has a different table influencing where to go and a piece value determining its importance. The king has two tables, early game and late game tables to determine how it moves
 * The entire board score is (White position score + white piece score) - (Black position score + black piece score)
 
-#### Thanks to [Merlin](https://github.com/Merlin-san/) and d4rkpl4y3r for fixing my bit packing stuff.
+#### Thanks to [Merlin](https://github.com/MerlinVR) and d4rkpl4y3r for fixing my bit packing stuff.
 If you have any question contact me at [@SCRNinVR](https://twitter.com/SCRNinVR) or on Discord, SCRN#8008
